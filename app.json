@@ -1,0 +1,47 @@
+{
+  "name": "Sbo",
+  "displayName": "Sbo",
+  "version": "1.1.0",
+  "platforms": [
+    "ios",
+    "android"
+  ],
+  "icon": "./src/assets/images/appLogo.png",
+  "splash": {
+    "image": "./src/assets/images/SplashScreen.png",
+    "resizeMode": "contain",
+    "backgroundColor": "#ffffff"
+  },
+  "ios": {
+    "bundleIdentifier": "ai.metastart.sbo",
+    "googleServicesFile": "./GoogleService-Info.plist",
+    "buildNumber": "4",
+    "supportsTablet": true,
+    "infoPlist": {}
+  },
+  "android": {
+    "package": "ai.metastart.sbo",
+    "versionCode": 6,
+    "googleServicesFile": "./google-services.json",
+    "adaptiveIcon": {
+      "foregroundImage": "./src/assets/images/adaptive-icon.png",
+      "backgroundColor": "#ffffff"
+    },
+    "permissions": [
+      "android.permission.CAMERA",
+      "android.permission.READ_EXTERNAL_STORAGE",
+      "android.permission.WRITE_EXTERNAL_STORAGE",
+      "android.permission.ACCESS_FINE_LOCATION",
+      "android.permission.ACCESS_COARSE_LOCATION"
+    ]
+  },
+  "extra": {
+    "eas": {
+      "projectId": "118e139e-1a4c-4c67-beba-315b2daf6a7d"
+    }
+  },
+  "owners": "metastart"
+}
+
+
+

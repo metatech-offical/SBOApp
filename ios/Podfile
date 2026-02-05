@@ -1,0 +1,66 @@
+# Use GitHub source to bypass CDN issues
+source 'https://github.com/CocoaPods/Specs.git'
+
+def node_require(script)
+  # Resolve script with node to allow for hoisting
+  require Pod::Executable.execute_command('node', ['-p',
+    "require.resolve(
+      '#{script}',
+      {paths: [process.argv[1]]},
+    )", __dir__]).strip
+end
+
+# Use it to require both react-native's and this package's scripts:
+node_require('react-native/scripts/react_native_pods.rb')
+node_require('react-native-permissions/scripts/setup.rb')
+
+platform :ios, min_ios_version_supported
+prepare_react_native_project!
+
+# Enable modular headers globally to fix Firebase static library integration
+use_modular_headers!
+
+setup_permissions([
+'PhotoLibrary',
+'MediaLibrary',
+'Microphone',
+'Camera',
+'Notifications',
+'LocationAccuracy',
+'LocationAlways',
+'LocationWhenInUse',
+])
+
+linkage = ENV['USE_FRAMEWORKS'] || 'static'
+if linkage != nil
+  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
+  use_frameworks! :linkage => :static
+  $RNFirebaseAsStaticFramework = true
+end
+
+target 'Sbo' do
+ config = use_native_modules!
+
+ use_react_native!(
+   :path => config[:reactNativePath],
+   :app_path => "#{Pod::Config.instance.installation_root}/.."
+ )
+
+ # Firebase pods with modular headers (redundant with global setting but explicit)
+ pod 'FirebaseCore', :modular_headers => true
+ pod 'FirebaseAuth', :modular_headers => true
+ pod 'FirebaseAuthInterop', :modular_headers => true
+ pod 'FirebaseAppCheckInterop', :modular_headers => true
+ pod 'FirebaseCoreExtension', :modular_headers => true
+ pod 'RecaptchaInterop', :modular_headers => true
+ pod 'GoogleUtilities', :modular_headers => true
+ pod 'FirebaseCoreInternal', :modular_headers => true
+
+ post_install do |installer|
+   react_native_post_install(
+     installer,
+     config[:reactNativePath],
+     :mac_catalyst_enabled => false,
+   )
+ end
+end

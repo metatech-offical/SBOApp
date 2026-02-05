@@ -1,0 +1,57 @@
+{
+    "cli": {
+      "version": ">= 16.3.0",
+      "appVersionSource": "local"
+    },
+    "build": {
+      "development": {
+        "developmentClient": true,
+        "distribution": "internal",
+        "android": {
+          "image": "ubuntu-22.04-jdk-17-ndk-r26b"
+        },
+        "env": {
+          "NODE_VERSION": "22.18.1",
+          "NODE_OPTIONS": "--max_old_space_size=4096"
+        },
+        "prebuildCommand": "curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - && sudo apt-get install -y nodejs"
+      },
+      "preview": {
+        "distribution": "internal",
+        "android": {
+          "image": "ubuntu-22.04-jdk-17-ndk-r26b"
+        },
+        "env": {
+          "NODE_VERSION": "22.18.1",
+          "NODE_OPTIONS": "--max_old_space_size=4096"
+        },
+        "prebuildCommand": "curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - && sudo apt-get install -y nodejs",
+        "ios": {
+          "simulator": true
+        }
+      },
+      "production": {
+        "autoIncrement": true,
+        "android": {
+          "credentialsSource": "local",
+          "image": "ubuntu-22.04-jdk-17-ndk-r26b"
+        },
+        "ios": {
+          "image": "macos-sequoia-15.3-xcode-16.2"
+        },
+        "env": {
+          "NODE_OPTIONS": "--max_old_space_size=4096",
+          "NODE_VERSION": "22.18.1"
+        },
+        "prebuildCommand": "curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - && sudo apt-get install -y nodejs"
+      }
+    },
+    "submit": {
+      "production": {
+        "ios": {
+          "ascAppId": "6747470931"
+        }
+      }
+    }
+  }
+  

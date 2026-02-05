@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+android/app/build/
+android/build/
+android/.gradle/
+ios/build/
+ios/Pods/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Metro
+.metro-health-check*
+
+# Env and secrets
+.env
+.env.local
+.env.*.local
+*.pem
+credentials.json
+
+# OS and IDE
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Testing
+coverage/
+
+# Temporary
+tmp/
+temp/
+*.tmp

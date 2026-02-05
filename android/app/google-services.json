@@ -1,0 +1,71 @@
+{
+  "project_info": {
+    "project_number": "251135980608",
+    "project_id": "ai-metastart-sbo",
+    "storage_bucket": "ai-metastart-sbo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:251135980608:android:ab31a9b81a0ced09fcdba5",
+        "android_client_info": {
+          "package_name": "com.sbo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "251135980608-6hluthe4gsp0qo717j1lticcsve93ams.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sbo",
+            "certificate_hash": "cbefd1dd8d5b9254364b4cb6e1f070b7c79f28b8"
+          }
+        },
+        {
+          "client_id": "251135980608-ens29ndr01ic0pflkc7jqdp4amtqedfi.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sbo",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "251135980608-ve3doit7jm9m77g4pivq83i13fp7p3oa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sbo",
+            "certificate_hash": "8f661de72bf1d7d5833560c62dcc334b80766081"
+          }
+        },
+        {
+          "client_id": "251135980608-f9e311r02b2a36a1hdsu3pm4ta6denhd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjT8l9k4PIOAMZa3dC-i7WTyUlDHxXP3k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "251135980608-f9e311r02b2a36a1hdsu3pm4ta6denhd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "251135980608-bppspi997l2lbs1qcpe4seba8eqjlnae.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "ai.metastart.sbo",
+                "app_store_id": "6747470931"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
