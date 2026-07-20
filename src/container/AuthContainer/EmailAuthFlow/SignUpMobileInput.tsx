@@ -9,27 +9,54 @@ import SafeAreaWrapper from '@components/ScreenLayouts/SafeAreaWrapper';
 import MobileNumInput from '@components/CustomInputs/MobileNumInput';
 import {Colors} from '@constant/colors';
 import {fontSize} from '@constant/fontSize';
+import {useToastMessage} from '@hooks/useToastMessage';
+
 interface ISignUpMobileInputFormReq {
   mobile: string;
 }
+
+const isPhoneReady = (formatted: string, national: string) => {
+  const digits = (formatted || '').replace(/\D/g, '');
+  // E.164 without +: country code + national number, typically 10–15 digits
+  return digits.length >= 10 && digits.length <= 15 && national.length >= 7;
+};
 
 const SignUpMobileInput = ({navigation, route}: SignUpMobileInputProps) => {
   const {uuid} = route?.params || {};
   const [formattedLoginIdentifier, setFormattedLoginIdentifier] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const {control, handleSubmit} = useForm<ISignUpMobileInputFormReq>({
+  const {showError, showSuccess} = useToastMessage();
+  const {control, handleSubmit, watch} = useForm<ISignUpMobileInputFormReq>({
     defaultValues: {
       mobile: '',
     },
   });
-  const formatPhxoneNumber = (number: string) => {
+  const mobile = watch('mobile');
+  const canContinue = isPhoneReady(formattedLoginIdentifier, mobile);
+
+  const formatPhoneNumber = (number: string) => {
     if (number.startsWith('+')) return number;
     return `+91${number}`;
   };
+
   const handleSignUpSubmit = async (data: ISignUpMobileInputFormReq) => {
     setIsLoading(true);
     const formattedNumber =
-      formattedLoginIdentifier || formatPhxoneNumber(data?.mobile);
+      formattedLoginIdentifier || formatPhoneNumber(data?.mobile);
+
+    // Simulator / local: Firebase SMS often fails — skip to OTP and verify via local API
+    if (__DEV__) {
+      showSuccess('Dev mode: use OTP 123456');
+      navigation.navigate('EmailOtp', {
+        type: 'mobile',
+        confirmationResult: 'DEV',
+        email: '',
+        uuid: uuid,
+        mobile: formattedNumber,
+      });
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const confirmationResult = await auth().signInWithPhoneNumber(
@@ -44,6 +71,7 @@ const SignUpMobileInput = ({navigation, route}: SignUpMobileInputProps) => {
       });
     } catch (error: any) {
       console.error('Error signing in:', error);
+      showError(error?.message || 'Failed to send mobile OTP');
     } finally {
       setIsLoading(false);
     }
@@ -79,7 +107,7 @@ const SignUpMobileInput = ({navigation, route}: SignUpMobileInputProps) => {
                 keyboardType="phone-pad"
                 autoCapitalize="none"
                 textInputProps={{
-                  maxLength: 10,
+                  maxLength: 15,
                 }}
               />
             )}
@@ -87,20 +115,15 @@ const SignUpMobileInput = ({navigation, route}: SignUpMobileInputProps) => {
           <CustomButton
             text="Continue"
             onPress={handleSubmit(handleSignUpSubmit)}
-            disabled={
-              !formattedLoginIdentifier ||
-              formattedLoginIdentifier.length !== 13
-            }
+            disabled={!canContinue}
             btnStyle={
-              !formattedLoginIdentifier ||
-              formattedLoginIdentifier.length !== 13
+              !canContinue
                 ? {opacity: 0.5}
                 : {opacity: 1, backgroundColor: '#ffffff'}
             }
             isLoading={isLoading}
             textStyle={
-              !formattedLoginIdentifier ||
-              formattedLoginIdentifier.length !== 13
+              !canContinue
                 ? {color: 'rgba(255, 255, 255, 0.5)'}
                 : {color: Colors.black}
             }

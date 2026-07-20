@@ -40,7 +40,20 @@ const CheckCreator = ({navigation, route}: CheckCreatorProps) => {
           routes: [{name: 'MainNavigator'}],
         });
       } else {
-        showError(res?.error?.data?.message);
+        const message =
+          res?.error?.data?.message ||
+          'Unable to complete signup. Please log in.';
+        showError(message);
+        if (
+          res?.error?.status === 404 ||
+          String(message).toLowerCase().includes('log in') ||
+          String(message).toLowerCase().includes('expired')
+        ) {
+          navigation.reset({
+            index: 0,
+            routes: [{name: 'LoginScreen'}],
+          });
+        }
       }
     }
   };

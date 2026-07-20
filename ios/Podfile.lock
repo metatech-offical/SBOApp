@@ -1411,7 +1411,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-compressor (1.13.0):
+  - react-native-compressor (1.16.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1636,7 +1636,7 @@ PODS:
     - Yoga
   - react-native-version-check (3.5.0):
     - React-Core
-  - react-native-video (6.18.0):
+  - react-native-video (6.19.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1649,7 +1649,7 @@ PODS:
     - React-featureflags
     - React-graphics
     - React-ImageManager
-    - react-native-video/Video (= 6.18.0)
+    - react-native-video/Video (= 6.19.0)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-rendererdebug
@@ -1658,7 +1658,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-video/Fabric (6.18.0):
+  - react-native-video/Fabric (6.19.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1679,7 +1679,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-video/Video (6.18.0):
+  - react-native-video/Video (6.19.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2463,7 +2463,7 @@ DEPENDENCIES:
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
-  https://github.com/CocoaPods/Specs.git:
+  trunk:
     - Firebase
     - FirebaseAppCheckInterop
     - FirebaseAuth
@@ -2751,7 +2751,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: 36adde22631838680d1be62776e8ccb83186c06a
   react-native-blob-util: 81413565fbcf5250da002f561ace68da9af681f5
   react-native-blur: 745703f35133ed6a1210d4bbff358a631911f002
-  react-native-compressor: d71a1115304bf2b9fd8fc4327cf830d57fc12f5f
+  react-native-compressor: 41eee76d5276cf593a1a532fe93f46b400764d79
   react-native-create-thumbnail: dbee035105fdc88463f435030fe0f0fc1843801c
   react-native-image-editor: e004086034765eb4695a37f081d9e511ab92e3df
   react-native-image-picker: 5f9867b6a223594dbfdb456428638daef42e6e6c
@@ -2762,7 +2762,7 @@ SPEC CHECKSUMS:
   react-native-simple-toast: e136a01f13204b40b052d70ee00f760e414b39f5
   react-native-slider: 1e655d76622a8611de2e6f403cd206f876acc16a
   react-native-version-check: 842a3b0e7221798cbe8c6abaf24aab3ed0b485ce
-  react-native-video: 609d513ef924a6f8e28f076872b7d10edba62245
+  react-native-video: 3940e7fd991ccdfe68e7e465a3123eb1d4781442
   react-native-webview: 05734d99f1e422c5ddfeefbd083d53abd78fccb1
   react-native-zego-express-engine: c98aba974ed97a4dc4c38370b8759e47787e2d6b
   React-NativeModulesApple: ec44c21ae0bbb5f9a2df72db00294e33a00e07f0
@@ -2817,6 +2817,6 @@ SPEC CHECKSUMS:
   Yoga: be02ca501b03c79d7027a6bbbd0a8db985034f11
   ZegoExpressEngine: c1b01551fc817e6fd32b3a877a9d15de6d93f68e
 
-PODFILE CHECKSUM: 83ee0f0cdf5b25f3b37d3c480b72ab5c02c16937
+PODFILE CHECKSUM: 532a43eccb3071d260531d32a7b693e3d0e84dac
 
-COCOAPODS: 1.16.2
+COCOAPODS: 1.15.2

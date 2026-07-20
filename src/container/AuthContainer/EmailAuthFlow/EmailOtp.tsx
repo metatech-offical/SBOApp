@@ -67,18 +67,31 @@ const EmailOtp = ({navigation, route}: EmailOtpProps) => {
 
   const handleOtpUpSubmit = async (data: IOtpFormReq) => {
     if (type === 'email') {
-      const res = await verifyEmailOtp({
-        otp: data.otp,
-        email: email,
-      });
-      if (res?.data?.success) {
-        showSuccess(res?.data?.message || '');
-        navigation.navigate('SignUpMobileInput', {
-          uuid: res?.data?.data?.uuid,
+      try {
+        const res = await verifyEmailOtp({
+          otp: String(data.otp || '').trim(),
+          email: String(email || '').trim().toLowerCase(),
         });
-      }
-      if (res?.error) {
-        showError(res?.error?.data?.message || '');
+
+        if (res?.data?.success) {
+          const nextUuid = res?.data?.data?.uuid || uuid;
+          if (!nextUuid) {
+            showError('Session expired. Please start signup again.');
+            return;
+          }
+          showSuccess(res?.data?.message || 'Email verified');
+          navigation.navigate('SignUpMobileInput', {uuid: nextUuid});
+          return;
+        }
+
+        const errMsg =
+          (res as any)?.error?.data?.message ||
+          (res as any)?.data?.message ||
+          'Invalid OTP. Please try again.';
+        showError(errMsg);
+      } catch (error: any) {
+        console.error('Email OTP verify failed:', error);
+        showError(error?.message || 'Invalid OTP. Please try again.');
       }
     } else if (type === 'mobile') {
       try {
@@ -88,14 +101,24 @@ const EmailOtp = ({navigation, route}: EmailOtpProps) => {
           return;
         }
 
-        const userCredential = await currentConfirmationResult.confirm(
-          data?.otp,
-        );
-
-        let idToken = await userCredential?.user?.getIdToken();
+        let idToken: string | undefined;
+        // Local/dev bypass (simulator cannot receive Firebase SMS)
+        if (__DEV__ && currentConfirmationResult === 'DEV') {
+          if (data?.otp !== '123456') {
+            showError('Dev mode: use OTP 123456');
+            return;
+          }
+          idToken = 'DEV';
+        } else {
+          const userCredential = await currentConfirmationResult.confirm(
+            data?.otp,
+          );
+          idToken = await userCredential?.user?.getIdToken();
+        }
 
         const payload = {
           idToken: idToken,
+          phoneNumber: mobile,
           deviceInfo: {
             platform: Platform.OS,
             fcmToken: deviceToken,
@@ -209,7 +232,16 @@ const EmailOtp = ({navigation, route}: EmailOtpProps) => {
               <TextInput
                 ref={inputRef}
                 value={value}
-                onChangeText={onChange}
+                onChangeText={text => {
+                  const digits = text.replace(/\D/g, '').slice(0, pinCount);
+                  onChange(digits);
+                  if (digits.length === pinCount) {
+                    // Auto-submit once OTP is complete
+                    setTimeout(() => {
+                      handleSubmit(handleOtpUpSubmit)();
+                    }, 50);
+                  }
+                }}
                 maxLength={pinCount}
                 keyboardType="numeric"
                 style={styles.hiddenInput}

@@ -81,7 +81,7 @@ const MobileNumInput = ({
           defaultCode={countryISOCode as any}
           layout="first"
           onChangeText={text => {
-            const cleanText = text.replace(/\D/g, '').slice(0, 10);
+            const cleanText = text.replace(/\D/g, '').slice(0, 15);
             onChangeText(cleanText);
           }}
           onChangeFormattedText={text => {

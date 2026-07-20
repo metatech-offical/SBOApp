@@ -29,7 +29,12 @@ const SignUpWithEmail = ({navigation}: SignUpWithEmailProps) => {
     };
     const res = await signup(payload);
     if (res?.data?.success) {
-      showSuccess(res?.data?.message || '');
+      const debugOtp = (res?.data?.data as any)?.debugOtp;
+      showSuccess(
+        debugOtp
+          ? `OTP (debug): ${debugOtp}`
+          : res?.data?.message || '',
+      );
       navigation.navigate('EmailOtp', {
         type: 'email',
         email: data?.email,
@@ -37,28 +42,33 @@ const SignUpWithEmail = ({navigation}: SignUpWithEmailProps) => {
         uuid: res?.data?.data?.uuid,
       });
     } else {
-      const data = res?.data?.data as IOnboardingUser;
-      if (!data) {
+      const onboardingUser = res?.data?.data as IOnboardingUser | undefined;
+      if (!onboardingUser) {
+        const errorMessage =
+          (res as any)?.error?.data?.message ||
+          (res as any)?.error?.error ||
+          'Unable to sign up. Check your connection and try again.';
+        showError(errorMessage);
         return;
       }
-      if (data.verified) {
-        showError(res?.error?.data?.message || 'Account already exists');
+      if (onboardingUser.verified) {
+        showError((res as any)?.error?.data?.message || 'Account already exists');
         return;
       }
 
       if (
-        data.onboardingSteps.emailVerified &&
-        !data.onboardingSteps.phoneVerified
+        onboardingUser.onboardingSteps.emailVerified &&
+        !onboardingUser.onboardingSteps.phoneVerified
       ) {
-        navigation.navigate('SignUpMobileInput', {uuid: data?.uuid});
+        navigation.navigate('SignUpMobileInput', {uuid: onboardingUser?.uuid});
       }
 
-      if (data.onboardingSteps.phoneVerified && !data.username) {
-        navigation.navigate('TakeUserName', {uuid: data?.uuid});
+      if (onboardingUser.onboardingSteps.phoneVerified && !onboardingUser.username) {
+        navigation.navigate('TakeUserName', {uuid: onboardingUser?.uuid});
       }
 
-      if (data.username && !data.membership) {
-        navigation.navigate('CheckCreator', {uuid: data?.uuid});
+      if (onboardingUser.username && !onboardingUser.membership) {
+        navigation.navigate('CheckCreator', {uuid: onboardingUser?.uuid});
       }
     }
   };

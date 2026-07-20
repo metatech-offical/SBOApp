@@ -7,13 +7,21 @@ import {
   POST_UPLOAD_URL_STAGING,
 } from '@env';
 
+// true = Railway production; false = local SboServer
 export const isStaging = true;
 
-export const BASE_URL = isStaging ? BASE_URL_STAGING : BASE_URL_LOCAL;
-export const SOCKET_URL = isStaging ? SOCKET_URL_STAGING : SOCKET_URL_LOCAL;
+export const BASE_URL = isStaging
+  ? BASE_URL_STAGING ||
+    'https://sboserver-production.up.railway.app/v1/api/'
+  : BASE_URL_LOCAL || 'http://localhost:8080/v1/api/';
+export const SOCKET_URL = isStaging
+  ? SOCKET_URL_STAGING || 'https://sboserver-production.up.railway.app'
+  : SOCKET_URL_LOCAL || 'http://localhost:8080';
 export const POST_UPLOAD_URL = isStaging
-  ? POST_UPLOAD_URL_STAGING
-  : POST_UPLOAD_URL_LOCAL;
+  ? POST_UPLOAD_URL_STAGING ||
+    'https://sboserver-production.up.railway.app/v1/api/stream/videos/upload'
+  : POST_UPLOAD_URL_LOCAL ||
+    'http://localhost:8080/v1/api/stream/videos/upload';
 
 export const ZEGO_NEW_APP_ID = '1496870460';
 export const ZEGO_APP_NEW_SIGNIN_ID =

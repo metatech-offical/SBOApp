@@ -65,7 +65,21 @@ const ChooseYourPlan: React.FC<ChooseYourPlanProps> = ({navigation, route}) => {
       });
     } else {
       console.log('res error', JSON.stringify(res?.error, null, 2));
-      showError(res?.error?.data?.message);
+      const message =
+        res?.error?.data?.message ||
+        'Unable to complete signup. Please log in.';
+      showError(message);
+      // Session already completed / expired — send user to login
+      if (
+        res?.error?.status === 404 ||
+        String(message).toLowerCase().includes('log in') ||
+        String(message).toLowerCase().includes('expired')
+      ) {
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'LoginScreen'}],
+        });
+      }
     }
   };
   const renderPlanItem = ({item, index}: {item: string; index: number}) => {
