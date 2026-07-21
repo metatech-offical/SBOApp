@@ -6,4 +6,6 @@ declare module '@env' {
   export const BASE_URL_STAGING: string;
   export const SOCKET_URL_STAGING: string;
   export const POST_UPLOAD_URL_STAGING: string;
+
+  export const STRIPE_PUBLISHABLE_KEY: string;
 }

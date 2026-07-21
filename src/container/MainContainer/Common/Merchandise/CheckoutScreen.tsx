@@ -1,5 +1,6 @@
 import {View, StyleSheet, FlatList, TouchableOpacity, Text} from 'react-native';
-import React from 'react';
+import React, {useState} from 'react';
+import {useStripe} from '@stripe/stripe-react-native';
 import {CheckoutScreenProps} from '@navigation/screens';
 import AnimationBackground from '@components/AnimationComponent/AnimationBackground';
 import StackHeader from '@components/CustomHeaders/StackHeader';
@@ -14,7 +15,9 @@ import {fonts} from '@constant/fontfamily';
 import {useToastMessage} from '@hooks/useToastMessage';
 
 const CheckoutScreen = ({navigation, route}: CheckoutScreenProps) => {
-  const {showError} = useToastMessage();
+  const {showError, showSuccess} = useToastMessage();
+  const {initPaymentSheet, presentPaymentSheet} = useStripe();
+  const [isPaying, setIsPaying] = useState(false);
   const {cartData, screenType} = route?.params || {
     cartData: [],
     screenType: 'from_cart',
@@ -23,6 +26,30 @@ const CheckoutScreen = ({navigation, route}: CheckoutScreenProps) => {
 
   const handleAddAddress = () => {
     navigation.navigate('GetAllAddress');
+  };
+
+  const openPaymentSheet = async (clientSecret: string) => {
+    const {error: initError} = await initPaymentSheet({
+      merchantDisplayName: 'SBO',
+      paymentIntentClientSecret: clientSecret,
+      allowsDelayedPaymentMethods: false,
+      returnURL: 'sbo://stripe-redirect',
+    });
+
+    if (initError) {
+      showError(initError.message || 'Unable to start payment');
+      return false;
+    }
+
+    const {error: presentError} = await presentPaymentSheet();
+    if (presentError) {
+      if (presentError.code !== 'Canceled') {
+        showError(presentError.message || 'Payment failed');
+      }
+      return false;
+    }
+
+    return true;
   };
 
   const handleCreateOrderPress = async () => {
@@ -45,9 +72,26 @@ const CheckoutScreen = ({navigation, route}: CheckoutScreenProps) => {
         },
       })),
     };
-    const result = await handleCreateOrder(payload);
-    if (result?.success) {
-      navigation.navigate('OrderConfirmation');
+
+    setIsPaying(true);
+    try {
+      const result = await handleCreateOrder(payload);
+      const clientSecret = result?.data?.clientSecret;
+
+      if (!result?.success || !clientSecret) {
+        if (result?.success && !clientSecret) {
+          showError('Payment could not be started. Please try again.');
+        }
+        return;
+      }
+
+      const paid = await openPaymentSheet(clientSecret);
+      if (paid) {
+        showSuccess('Payment successful');
+        navigation.navigate('OrderConfirmation');
+      }
+    } finally {
+      setIsPaying(false);
     }
   };
 
@@ -101,9 +145,9 @@ const CheckoutScreen = ({navigation, route}: CheckoutScreenProps) => {
           </TouchableOpacity>
         )}
         <CustomButton
-          text="Continue"
+          text="Pay with card"
           onPress={handleCreateOrderPress}
-          isLoading={isCreatingOrder}
+          isLoading={isCreatingOrder || isPaying}
           btnStyle={styles.btnStyle}
           textStyle={styles.textStyle}
         />

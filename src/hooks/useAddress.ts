@@ -87,7 +87,7 @@ const useAddress = () => {
     try {
       const result = await createOrder(payload).unwrap();
       if (result?.success) {
-        showSuccess(result?.message || 'Order created successfully');
+        // Success toast is shown after Stripe Payment Sheet completes
         return result;
       } else {
         showError(result?.message || 'Failed to create order');

@@ -120,9 +120,31 @@ Public networking: target port **8080**, domain `sboserver-production.up.railway
 - [ ] Verify a Resend domain for OTP to any email
 - [ ] Enable Firebase Phone + test on a real device; set `OTP_DEBUG=false`
 - [ ] APNs key in Firebase for iOS push
-- [ ] Stripe / Google OAuth / Zego callbacks
+- [x] Stripe Payment Sheet for merchandise checkout (21 Jul 2026)
 - [ ] SBOAdmin pointed at Railway URL
 - [ ] Rotate secrets that were shared in chat/logs
+
+---
+
+## Stripe checkout (21 Jul 2026)
+
+**Flow:** Checkout → `order/checkout` creates order + Stripe PaymentIntent (AED) → app opens Payment Sheet → webhook `payment_intent.succeeded` marks order paid + clears cart + notifies.
+
+**Railway (SboServer):**
+```env
+STRIPE_API_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...   # optional (returned to app; app still needs its own copy)
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+**App `.env`:**
+```env
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+```
+
+**Webhook:** `https://sboserver-production.up.railway.app/webhook/stripe` — enable `payment_intent.succeeded` and `payment_intent.payment_failed`.
+
+**Test card:** `4242 4242 4242 4242`, any future expiry, any CVC.
 
 ---
 

@@ -1,8 +1,10 @@
-import {LogBox, StyleSheet, Alert} from 'react-native';
+import {LogBox, Alert} from 'react-native';
 import React, {useEffect} from 'react';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {Provider} from 'react-redux';
 import {useNetInfo} from '@react-native-community/netinfo';
+import {StripeProvider} from '@stripe/stripe-react-native';
+import {STRIPE_PUBLISHABLE_KEY} from '@env';
 import {requestNotificationPermission} from '@utils/permision';
 import {store} from '@store/index';
 import Application from '@navigation/index';
@@ -34,17 +36,20 @@ const App = () => {
   return (
     <GestureHandlerRootView>
       <SafeAreaProvider>
-        <Provider store={store}>
-          <StreamListener />
-          <ToastProvider>
-            <Application />
-          </ToastProvider>
-        </Provider>
+        <StripeProvider
+          publishableKey={STRIPE_PUBLISHABLE_KEY || ''}
+          urlScheme="sbo"
+          merchantIdentifier="merchant.ai.metastart.sbo">
+          <Provider store={store}>
+            <StreamListener />
+            <ToastProvider>
+              <Application />
+            </ToastProvider>
+          </Provider>
+        </StripeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 };
 
 export default App;
-
-const styles = StyleSheet.create({});
