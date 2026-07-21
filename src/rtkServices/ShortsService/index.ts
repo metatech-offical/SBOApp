@@ -128,12 +128,21 @@ export const shortsApi = api.injectEndpoints({
     }),
     uploadCroppCoverImage: builder.mutation<any, any>({
       query: data => {
+        const mime = data?.mime || 'image/jpeg';
+        const ext =
+          mime.includes('png')
+            ? 'png'
+            : mime.includes('webp')
+              ? 'webp'
+              : mime.includes('gif')
+                ? 'gif'
+                : 'jpg';
         const formData = new FormData();
         formData.append('file', {
           uri: data?.sourceURL || data?.path,
-          type: data?.mime || 'image/jpeg',
-          name: 'profile.jpg',
-        });
+          type: mime,
+          name: data?.filename || `upload-${Date.now()}.${ext}`,
+        } as any);
         return {
           url: ENDPOINTS.contentAcction.uploadCoverImage,
           method: 'POST',

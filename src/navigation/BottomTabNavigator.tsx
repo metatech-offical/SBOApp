@@ -2,7 +2,8 @@ import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {useAppSelector} from '@store/index';
 import {RootState} from '@store/index';
-import {Image, ImageStyle} from 'react-native';
+import {Image, ImageStyle, Platform} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 // Import Tab Icons
 import homeIcon from '@assets/images/homeIcon.png';
@@ -44,23 +45,34 @@ const getTabIcon =
 const defaultIconStyle = {width: 24, height: 24};
 const ticketIconStyle = {width: 20, height: 20, resizeMode: 'contain' as const};
 
+const useTabBarStyle = () => {
+  const insets = useSafeAreaInsets();
+  // Keep tab bar above Android system back / gesture nav
+  const bottomPad =
+    Platform.OS === 'android'
+      ? Math.max(insets.bottom, 16)
+      : Math.max(insets.bottom, 10);
+  return {
+    position: 'absolute' as const,
+    backgroundColor: 'rgba(9, 4, 46, 0.9)',
+    height: 65 + bottomPad,
+    paddingTop: 7,
+    paddingBottom: bottomPad,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderWidth: 0,
+    borderTopWidth: 0,
+  };
+};
+
 // Creator Bottom Tab Navigator
 function CreatorBottomTabNavigator() {
+  const tabBarStyle = useTabBarStyle();
   return (
     <CreatorTab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
-          position: 'absolute',
-          backgroundColor: 'rgba(9, 4, 46, 0.9)',
-          height: 85,
-          paddingTop: 7,
-          paddingBottom: 10,
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
-          borderWidth: 0,
-          borderTopWidth: 0,
-        },
+        tabBarStyle,
         tabBarActiveTintColor: Colors.white,
         tabBarInactiveTintColor: '#666',
         tabBarLabelStyle: {
@@ -122,21 +134,12 @@ function CreatorBottomTabNavigator() {
 
 // User Bottom Tab Navigator
 function UserBottomTabNavigator() {
+  const tabBarStyle = useTabBarStyle();
   return (
     <UserTab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
-          position: 'absolute',
-          backgroundColor: 'rgba(9, 4, 46, 0.9)',
-          height: 85,
-          paddingTop: 7,
-          paddingBottom: 10,
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
-          borderWidth: 0,
-          borderTopWidth: 0,
-        },
+        tabBarStyle,
         tabBarActiveTintColor: Colors.white,
         tabBarInactiveTintColor: '#666',
         tabBarLabelStyle: {

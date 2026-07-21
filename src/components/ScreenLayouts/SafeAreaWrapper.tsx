@@ -5,15 +5,21 @@ import {View, StyleSheet, StatusBar, Platform} from 'react-native';
 import FastImage from 'react-native-fast-image';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import LinearGradient from 'react-native-linear-gradient';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 interface SafeAreaWrapperProps {
   children: React.ReactNode;
 }
 
 const SafeAreaWrapper = ({children}: SafeAreaWrapperProps) => {
   const keyboardStatus = useKeyboardVisibility();
+  const insets = useSafeAreaInsets();
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {paddingBottom: Platform.OS === 'android' ? insets.bottom : 0},
+      ]}>
       <StatusBar translucent backgroundColor="transparent" />
 
       <AnimationBackground

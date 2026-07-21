@@ -102,19 +102,10 @@ const EmailOtp = ({navigation, route}: EmailOtpProps) => {
         }
 
         let idToken: string | undefined;
-        // Local/dev bypass (simulator cannot receive Firebase SMS)
-        if (__DEV__ && currentConfirmationResult === 'DEV') {
-          if (data?.otp !== '123456') {
-            showError('Dev mode: use OTP 123456');
-            return;
-          }
-          idToken = 'DEV';
-        } else {
-          const userCredential = await currentConfirmationResult.confirm(
-            data?.otp,
-          );
-          idToken = await userCredential?.user?.getIdToken();
-        }
+        const userCredential = await currentConfirmationResult.confirm(
+          data?.otp,
+        );
+        idToken = await userCredential?.user?.getIdToken();
 
         const payload = {
           idToken: idToken,

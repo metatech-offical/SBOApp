@@ -29,9 +29,11 @@ import {navigationRef} from '@navigation/utils';
 import {Colors} from '@constant/colors';
 import {fontSize, height} from '@constant/fontSize';
 import {useToastMessage} from '@hooks/useToastMessage';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const PostUploadScreen = ({navigation}: PostUploadScreenProps) => {
   const {showError, showSuccess} = useToastMessage();
+  const insets = useSafeAreaInsets();
   const {control, handleSubmit, watch, setValue} = useForm();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [imageData, setImageData] = useState<any>([]);
@@ -44,19 +46,16 @@ const PostUploadScreen = ({navigation}: PostUploadScreenProps) => {
   const captionValue = watch('caption', '');
 
   const handleUpload = async (imageData: any) => {
-    try {
-      const result = await uploadImage({
-        path: imageData.path,
-        mime: imageData.mime,
-        filename: imageData.filename,
-      }).unwrap();
-      const imageUrl = result?.data;
-      if (imageUrl) {
-        return imageUrl;
-      }
-    } catch (error) {
-      console.error('Upload failed:', error);
+    const result = await uploadImage({
+      path: imageData.path,
+      mime: imageData.mime || 'image/jpeg',
+      filename: imageData.filename,
+    }).unwrap();
+    const imageUrl = result?.data;
+    if (!imageUrl) {
+      throw new Error(result?.message || 'Image upload returned no URL');
     }
+    return imageUrl;
   };
 
   const uploadPost = async (data: any) => {
@@ -66,17 +65,23 @@ const PostUploadScreen = ({navigation}: PostUploadScreenProps) => {
       for (const image of imageData) {
         try {
           const imageUrl = await handleUpload(image);
-          if (imageUrl) {
-            uploadedImageUrls.push(imageUrl);
-          }
+          uploadedImageUrls.push(imageUrl);
         } catch (error: any) {
           console.error('Error uploading image:', error);
           showError(
-            error?.data?.message || 'Error uploading one or more images',
+            error?.data?.message ||
+              error?.message ||
+              'Error uploading one or more images',
           );
           setIsLoading(false);
           return;
         }
+      }
+
+      if (uploadedImageUrls.length === 0) {
+        showError('Please add at least one image to your post');
+        setIsLoading(false);
+        return;
       }
 
       const payload = {
@@ -86,7 +91,7 @@ const PostUploadScreen = ({navigation}: PostUploadScreenProps) => {
       };
       const response = await createPost(payload).unwrap();
       if (response?.success) {
-        showSuccess(response?.message || '');
+        showSuccess(response?.message || 'Post uploaded successfully');
         navigationRef.current?.reset({
           index: 0,
           routes: [{name: 'HomeScreen'}],
@@ -94,9 +99,13 @@ const PostUploadScreen = ({navigation}: PostUploadScreenProps) => {
       } else {
         showError(response?.message || 'Failed to upload post');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload post error:', error);
-      showError('Failed to upload post. Please try again.');
+      showError(
+        error?.data?.message ||
+          error?.message ||
+          'Failed to upload post. Please try again.',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -334,8 +343,12 @@ const PostUploadScreen = ({navigation}: PostUploadScreenProps) => {
         </View>
       </KeyboardAwareScrollView>
 
-      {/* Bottom Action Bar */}
-      <View style={styles.bottomBar}>
+      {/* Bottom Action Bar — sit above Android system back / gesture nav */}
+      <View
+        style={[
+          styles.bottomBar,
+          {paddingBottom: Math.max(insets.bottom, 8)},
+        ]}>
         <View style={styles.actionButtons}>
           {/* <Pressable
             style={styles.actionButton}

@@ -44,24 +44,11 @@ const SignUpMobileInput = ({navigation, route}: SignUpMobileInputProps) => {
     const formattedNumber =
       formattedLoginIdentifier || formatPhoneNumber(data?.mobile);
 
-    // Simulator / local: Firebase SMS often fails — skip to OTP and verify via local API
-    if (__DEV__) {
-      showSuccess('Dev mode: use OTP 123456');
-      navigation.navigate('EmailOtp', {
-        type: 'mobile',
-        confirmationResult: 'DEV',
-        email: '',
-        uuid: uuid,
-        mobile: formattedNumber,
-      });
-      setIsLoading(false);
-      return;
-    }
-
     try {
       const confirmationResult = await auth().signInWithPhoneNumber(
         formattedNumber,
       );
+      showSuccess('OTP sent to your phone');
       navigation.navigate('EmailOtp', {
         type: 'mobile',
         confirmationResult: confirmationResult,
@@ -71,7 +58,10 @@ const SignUpMobileInput = ({navigation, route}: SignUpMobileInputProps) => {
       });
     } catch (error: any) {
       console.error('Error signing in:', error);
-      showError(error?.message || 'Failed to send mobile OTP');
+      showError(
+        error?.message ||
+          'Failed to send mobile OTP. Check Firebase Phone setup / SHA keys.',
+      );
     } finally {
       setIsLoading(false);
     }

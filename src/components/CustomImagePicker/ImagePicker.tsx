@@ -82,7 +82,7 @@ const CustomImagePicker = ({
         freeStyleCropEnabled: false,
         width,
         height,
-        compressImageQuality: 1, // 👈 ensures max quality
+        compressImageQuality: 0.85,
       });
 
       selectedType(imageResult);
@@ -102,7 +102,7 @@ const CustomImagePicker = ({
         freeStyleCropEnabled: false,
         width,
         height,
-        compressImageQuality: 1, // 👈 ensures max quality
+        compressImageQuality: 0.85,
         mediaType: 'photo',
       });
 

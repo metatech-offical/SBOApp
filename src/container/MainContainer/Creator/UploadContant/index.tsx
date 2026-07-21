@@ -15,11 +15,13 @@ import {navigate} from '@navigation/utils';
 import {Colors} from '@constant/colors';
 import {fonts} from '@constant/fontfamily';
 import {fontSize} from '@constant/fontSize';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const UploadContent = ({navigation}: UploadContentProps) => {
   const [activeTab, setActiveTab] = useState('Live');
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const [isShortsLoading, setIsShortsLoading] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const handleVideoUpload = async (isShorts: boolean = false) => {
     try {
@@ -183,8 +185,12 @@ const UploadContent = ({navigation}: UploadContentProps) => {
         style={styles.gradientBorder}>
         <View style={styles.mainContent}>{renderContent()}</View>
 
-        {/* Bottom Navigation */}
-        <View style={styles.bottomNavigation}>
+        {/* Bottom Navigation — above Android system back / gesture nav */}
+        <View
+          style={[
+            styles.bottomNavigation,
+            {paddingBottom: Math.max(insets.bottom, 16)},
+          ]}>
           <View style={styles.tabContainer}>
             {uploadTab.map(tab => (
               <TouchableOpacity
