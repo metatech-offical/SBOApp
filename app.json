@@ -13,14 +13,14 @@
     "backgroundColor": "#ffffff"
   },
   "ios": {
-    "bundleIdentifier": "ai.metastart.sbo",
+    "bundleIdentifier": "com.sbo.mymall",
     "googleServicesFile": "./GoogleService-Info.plist",
     "buildNumber": "4",
     "supportsTablet": true,
     "infoPlist": {}
   },
   "android": {
-    "package": "ai.metastart.sbo",
+    "package": "com.sbo.mymall",
     "versionCode": 6,
     "googleServicesFile": "./google-services.json",
     "adaptiveIcon": {

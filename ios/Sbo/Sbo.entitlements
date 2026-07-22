@@ -6,7 +6,7 @@
 	<string>development</string>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
-		<string>applinks:ai-metastart-sbo.firebaseapp.com</string>
+		<string>applinks:sboapp-987ec.firebaseapp.com</string>
 	</array>
 </dict>
 </plist>

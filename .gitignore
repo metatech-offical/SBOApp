@@ -20,6 +20,9 @@ ios/Pods/
 .env.*.local
 *.pem
 credentials.json
+android/app/sbo_stage.keystore
+*.jks
+!android/app/debug.keystore
 
 # OS and IDE
 .DS_Store

@@ -1,4 +1,4 @@
-package com.sbo
+package com.sbo.mymall
 
 import android.app.Application
 import com.facebook.react.PackageList

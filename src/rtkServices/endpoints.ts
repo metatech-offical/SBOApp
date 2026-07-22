@@ -23,13 +23,9 @@ export const POST_UPLOAD_URL = isStaging
   : POST_UPLOAD_URL_LOCAL ||
     'http://localhost:8080/v1/api/stream/videos/upload';
 
-export const ZEGO_NEW_APP_ID = '1496870460';
+export const ZEGO_NEW_APP_ID = '1319815314';
 export const ZEGO_APP_NEW_SIGNIN_ID =
-  '8dff763d9a2dbde98ecf7abe124473524674937f7331838fea32ce4a5c5e40e0';
-
-// export const ZEGO_APP_ID = '1321638506';
-// export const ZEGO_APP_SIGNIN_ID =
-//   '9b0ac4aa6cd74c2d3e1978998d3ec6f441097b3792595c5d4d2ea518abb1b6e1';
+  'c70c9652e833ec27846a020b8197f11d0ecf59035130cdc6ec2444f391aa1698';
 
 export const ENDPOINTS = {
   auth: {

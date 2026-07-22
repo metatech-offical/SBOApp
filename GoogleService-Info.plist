@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>ai.metastart.sbo</string>
+	<string>com.sbo.mymall</string>
 	<key>PROJECT_ID</key>
 	<string>sboapp-987ec</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:70118993511:ios:338b460c64b9b58173aec2</string>
+	<string>1:70118993511:ios:254e6b0a30fe657473aec2</string>
 </dict>
 </plist>

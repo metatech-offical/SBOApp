@@ -34,7 +34,7 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>ai.metastart.sbo.stripe</string>
+			<string>com.sbo.mymall.stripe</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>sbo</string>

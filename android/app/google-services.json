@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:70118993511:android:aedb1de5a575251b73aec2",
+        "mobilesdk_app_id": "1:70118993511:android:6450129cf79e83ff73aec2",
         "android_client_info": {
-          "package_name": "com.sbo"
+          "package_name": "com.sbo.mymall"
         }
       },
       "oauth_client": [],

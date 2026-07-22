@@ -26,8 +26,8 @@ Production setup day: mobile app, API on Railway, MongoDB Atlas, Redis, Cloudfla
 | Media | Cloudflare R2 bucket `sbo-media` |
 | Email OTP | **Resend** HTTPS API (Railway Hobby **blocks SMTP**) |
 | Auth / SMS | Firebase project **`sboapp-987ec`** (sboAPP) |
-| iOS Bundle ID | `ai.metastart.sbo` (kept as-is) |
-| Android package | `com.sbo` |
+| iOS Bundle ID | `com.sbo.mymall` |
+| Android package | `com.sbo.mymall` |
 
 ---
 
@@ -111,7 +111,7 @@ Public networking: target port **8080**, domain `sboserver-production.up.railway
 - Metro: `npm start -- --reset-cache`
 - Simulator: iPhone 16 Pro
 - Fixed Hermes build: `ios/.xcode.env.local` must point at current Node (`/opt/homebrew/bin/node`), not an old Cellar path
-- Bundle ID remains `ai.metastart.sbo`
+- Bundle ID is `com.sbo.mymall` (Android + iOS)
 
 ---
 

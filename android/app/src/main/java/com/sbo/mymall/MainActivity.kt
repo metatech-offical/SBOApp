@@ -1,4 +1,4 @@
-package com.sbo
+package com.sbo.mymall
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

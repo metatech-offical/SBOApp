@@ -39,7 +39,7 @@ const App = () => {
         <StripeProvider
           publishableKey={STRIPE_PUBLISHABLE_KEY || ''}
           urlScheme="sbo"
-          merchantIdentifier="merchant.ai.metastart.sbo">
+          merchantIdentifier="merchant.com.sbo.mymall">
           <Provider store={store}>
             <StreamListener />
             <ToastProvider>
