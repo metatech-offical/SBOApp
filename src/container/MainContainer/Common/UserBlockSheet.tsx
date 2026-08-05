@@ -39,7 +39,7 @@ const UserBlockSheet = ({
       )}
       <Text style={styles.blockUserNameText}>{`Block @${data?.username}`}</Text>
       <Text style={styles.blockUserDetailsText}>
-        {'They won’t be able to message you or find your content on SBO.'}
+        {'They won’t be able to message you or find your content on Smart App.'}
       </Text>
       <CustomButton
         text="Block"

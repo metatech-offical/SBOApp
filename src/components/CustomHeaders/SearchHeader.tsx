@@ -87,6 +87,7 @@ const SearchHeader: React.FC<StackHeaderProps> = ({
       <FastImage
         source={require('@assets/images/appLogo2.png')}
         style={styles.logo}
+        resizeMode={FastImage.resizeMode.contain}
       />
     </View>
   );
@@ -131,9 +132,8 @@ const styles = StyleSheet.create({
     fontSize: fontSize.f20,
   },
   logo: {
-    height: 33,
-    width: 78,
-    resizeMode: 'contain',
+    height: 40,
+    width: 40,
   },
 });
 

@@ -42,7 +42,7 @@ export default function HomeHeader({
         <FastImage
           source={require('@assets/images/appLogo2.png')}
           style={styles.logo}
-          resizeMode="contain"
+          resizeMode={FastImage.resizeMode.contain}
         />
       )}
 
@@ -85,9 +85,8 @@ const styles = StyleSheet.create({
     borderRadius: wp('10'),
   },
   logo: {
-    width: wp('20'),
-    height: hp('5%'),
-    resizeMode: 'contain',
+    width: 44,
+    height: 44,
   },
   notification: {},
   notificationContainer: {

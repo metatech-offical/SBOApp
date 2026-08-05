@@ -141,8 +141,7 @@ const styles = StyleSheet.create({
     marginLeft: wp('1'),
   },
   logo: {
-    height: 33,
-    width: 78,
-    resizeMode: 'contain',
+    height: 40,
+    width: 40,
   },
 });

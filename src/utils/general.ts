@@ -50,6 +50,38 @@ export const showToast = (msg: string) => {
   Toast.show(`${msg}`, Toast.LONG);
 };
 export async function handleOpenGallery() {
+  // Android 13+: system photo picker (no READ_MEDIA_* permission)
+  if (Platform.OS === 'android') {
+    const result = await launchImageLibrary({
+      mediaType: 'mixed',
+      selectionLimit: 10,
+      quality: 0.85,
+    });
+    if (result.didCancel || !result.assets?.length) {
+      return [];
+    }
+    return result.assets.map((asset: any) => {
+      const mime = asset.type || '';
+      const isImage = mime.startsWith('image');
+      const isVideo = mime.startsWith('video');
+      const size = asset.fileSize || 0;
+      const durationMs = asset.duration ? asset.duration * 1000 : 0;
+      const isValidSize = isImage ? size / (1024 * 1024) <= 25 : true;
+      const isValidDuration = isVideo ? durationMs <= 60100 : true;
+      return {
+        path: asset.uri,
+        sourceURL: asset.uri,
+        mime,
+        size,
+        filename: asset.fileName,
+        width: asset.width,
+        height: asset.height,
+        duration: durationMs,
+        isValid: isValidSize && isValidDuration,
+      };
+    });
+  }
+
   const imageResult = await ImageCropPicker.openPicker({
     multiple: true,
     maxFiles: 10,
@@ -99,59 +131,11 @@ export const handleOpenCamera = async () => {
   return newImage;
 };
 export const handleVideoSelection = async (isShorts: boolean = false) => {
-  try {
-    // Check for permissions based on platform
-    if (Platform.OS === 'ios') {
-      const hasPermission = await CheckPermission(
-        PERMISSIONS.IOS.PHOTO_LIBRARY,
-      );
-      if (!hasPermission) {
-        throw new Error('Permission to access media library was denied');
-      }
-    } else {
-      // For Android 13+ (API level 33+)
-      const hasVideoPermission = await CheckPermission(
-        PERMISSIONS.ANDROID.READ_MEDIA_VIDEO,
-      );
-      if (!hasVideoPermission) {
-        // For older Android versions
-        const hasStoragePermission = await CheckPermission(
-          PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE,
-        );
-        if (!hasStoragePermission) {
-          throw new Error('Permission to access media library was denied');
-        }
-      }
-    }
-    const videoResult = await ImageCropPicker.openPicker({
-      multiple: false,
-      mediaType: 'video',
-      compressVideoPreset: 'HighestQuality',
-    });
-    console.log('videoResult', videoResult);
-    const isVideo = videoResult.mime.startsWith('video');
-    if (!isVideo) {
-      throw new Error('Please select a video file');
-    }
-    // For shorts, duration must be <= 60 seconds
-    if (isShorts && videoResult.duration && videoResult.duration > 60000) {
-      throw new Error('Shorts must be 60 seconds or less');
-    }
-    return {
-      ...videoResult,
-      fileName: videoResult?.filename || getFileNameFromPath(videoResult.path),
-      isValid: true,
-    };
-  } catch (error: any) {
-    if (error.message) {
-      showToast(error.message);
-    }
-    return null;
-  }
+  // Prefer system picker path used by handleVideoSelection2
+  return handleVideoSelection2(isShorts);
 };
 export const handleVideoSelection2 = async (isShorts: boolean = false) => {
   try {
-    // Check for permissions based on platform
     if (Platform.OS === 'ios') {
       const hasPermission = await CheckPermission(
         PERMISSIONS.IOS.PHOTO_LIBRARY,
@@ -159,26 +143,16 @@ export const handleVideoSelection2 = async (isShorts: boolean = false) => {
       if (!hasPermission) {
         throw new Error('Permission to access media library was denied');
       }
-    } else {
-      // For Android 13+ (API level 33+)
-      const hasVideoPermission = await CheckPermission(
-        PERMISSIONS.ANDROID.READ_MEDIA_VIDEO,
-      );
-      if (!hasVideoPermission) {
-        // For older Android versions
-        const hasStoragePermission = await CheckPermission(
-          PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE,
-        );
-        if (!hasStoragePermission) {
-          throw new Error('Permission to access media library was denied');
-        }
-      }
     }
+    // Android: system photo picker — no READ_MEDIA_VIDEO permission required
     const videoResult = await launchImageLibrary({
       mediaType: 'video',
       selectionLimit: 1,
     });
     console.log('videoResult', videoResult);
+    if (videoResult.didCancel) {
+      return null;
+    }
     // Check if assets array exists and has items
     if (!videoResult.assets || videoResult.assets.length === 0) {
       throw new Error('No video selected');
@@ -198,9 +172,11 @@ export const handleVideoSelection2 = async (isShorts: boolean = false) => {
       : 0;
     return {
       ...selectedVideo,
+      path: selectedVideo.uri,
+      mime: selectedVideo.type,
       fileName:
         selectedVideo?.fileName ||
-        getFileNameFromPath(selectedVideo.originalPath || ''),
+        getFileNameFromPath(selectedVideo.originalPath || selectedVideo.uri || ''),
       duration: durationInMs,
       isValid: true,
     };

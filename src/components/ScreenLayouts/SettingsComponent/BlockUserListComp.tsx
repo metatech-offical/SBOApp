@@ -65,7 +65,7 @@ const BlockUserListComp = ({item}: {item: any}) => {
         <View style={styles.userDetails}>
           <Text style={styles.userNameText}>{item?.blocked?.username}</Text>
           <Text style={styles.userDetailsText}>
-            They won't be able to message you or find your content on SBO.
+            They won't be able to message you or find your content on Smart App.
           </Text>
         </View>
         <CustomButton

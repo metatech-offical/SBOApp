@@ -27,6 +27,7 @@ const ProfileHeader = ({
           <FastImage
             source={require('@assets/images/appLogo2.png')}
             style={styles.logo}
+            resizeMode={FastImage.resizeMode.contain}
           />
         </TouchableOpacity>
         <TouchableOpacity hitSlop={10} onPress={onSettingsPress}>
@@ -70,9 +71,8 @@ const styles = StyleSheet.create({
     columnGap: 10,
   },
   logo: {
-    height: 33,
-    width: 78,
-    resizeMode: 'contain',
+    height: 40,
+    width: 40,
   },
   cartIcon: {
     height: 20,

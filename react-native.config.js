@@ -1,7 +1,7 @@
 module.exports = {
   project: {
     android: {
-      packageName: 'com.sbo.mymall',
+      packageName: 'com.Mymall.smartapp',
     },
   },
   assets: ['./src/assets/fonts/'],

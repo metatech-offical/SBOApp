@@ -30,7 +30,7 @@ const CreatorHome = ({navigation}: CreatorHomeProps) => {
         backgroundColor="#1a1538"
         zIndex={0}
       />
-      <HomeHeader isCreator={true} />
+      <HomeHeader isCreator={true} showLogo={true} />
       {isLoading ? (
         <Loader visible={isLoading} />
       ) : (

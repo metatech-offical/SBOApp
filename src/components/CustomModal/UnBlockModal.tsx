@@ -29,7 +29,7 @@ const UnblockModal = ({
             </Text>
             <Text style={styles.modalDesc}>
               {selectedUser?.username || selectedUser?.blocked?.username} will
-              now be able to request follow and message you on SBO. They won't
+              now be able to request follow and message you on Smart App. They won't
               be notified that you unblocked them.
             </Text>
             <View style={styles.modalBtnRow}>

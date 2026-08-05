@@ -48,6 +48,7 @@ const SettingHeader = ({
         <FastImage
           source={require('@assets/images/appLogo2.png')}
           style={styles.logo}
+          resizeMode={FastImage.resizeMode.contain}
         />
       )}
     </View>
@@ -80,9 +81,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    height: 33,
-    width: 78,
-    resizeMode: 'contain',
+    height: 40,
+    width: 40,
   },
   saveButton: {
     paddingHorizontal: 15,

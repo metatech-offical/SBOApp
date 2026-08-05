@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CLIENT_ID</key>
+	<string>70118993511-rsst0o7ja4smn7tnd9f0u6nr88lc2duv.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.70118993511-rsst0o7ja4smn7tnd9f0u6nr88lc2duv</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>70118993511-nob6oagragpvb2nlj5elm03qq3tla094.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyBcO2wYgN9LgmyosV9hgoEbo-Y2DlABeV4</string>
 	<key>GCM_SENDER_ID</key>
@@ -9,7 +15,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.sbo.mymall</string>
+	<string>com.Mymall.smartapp</string>
 	<key>PROJECT_ID</key>
 	<string>sboapp-987ec</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +31,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:70118993511:ios:254e6b0a30fe657473aec2</string>
+	<string>1:70118993511:ios:a1d2148ca8ba802e73aec2</string>
 </dict>
 </plist>

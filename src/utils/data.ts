@@ -398,7 +398,7 @@ export const CreatorSettingsData = [
   },
 
   {
-    section: 'SBO Earnings',
+    section: 'Smart App Earnings',
     data: [
       {
         id: 4,
@@ -490,12 +490,12 @@ export const AboutData = [
   {
     id: 1,
     label: 'Privacy Policy',
-    value: 'Sbo Privacy Policy',
+    value: 'Smart App Privacy Policy',
   },
   {
     id: 2,
     label: 'Teams of service',
-    value: 'Sbo Teams of service',
+    value: 'Smart App Teams of service',
   },
 ];
 export const NotificationSettingData = [

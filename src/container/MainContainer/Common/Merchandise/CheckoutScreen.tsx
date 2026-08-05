@@ -30,7 +30,7 @@ const CheckoutScreen = ({navigation, route}: CheckoutScreenProps) => {
 
   const openPaymentSheet = async (clientSecret: string) => {
     const {error: initError} = await initPaymentSheet({
-      merchantDisplayName: 'SBO',
+      merchantDisplayName: 'Smart App',
       paymentIntentClientSecret: clientSecret,
       allowsDelayedPaymentMethods: false,
       returnURL: 'sbo://stripe-redirect',

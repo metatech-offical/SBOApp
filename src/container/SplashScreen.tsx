@@ -32,6 +32,7 @@ const SplashScreen = ({navigation}: SplashScreenProps) => {
     <FastImage
       source={require('@assets/images/SplashScreen.png')}
       style={styles.container}
+      resizeMode={FastImage.resizeMode.cover}
     />
   );
 };

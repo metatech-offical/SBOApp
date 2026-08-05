@@ -79,13 +79,13 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.sbo.mymall"
+    namespace "com.Mymall.smartapp"
     defaultConfig {
-        applicationId "com.sbo.mymall"
+        applicationId "com.Mymall.smartapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 6
-        versionName "1.0.3"
+        versionCode 7
+        versionName "1.0.4"
         multiDexEnabled true
     }
    packagingOptions {

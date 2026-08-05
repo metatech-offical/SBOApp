@@ -655,7 +655,7 @@ export default function VideoUploadScreen({
 
             <Text style={styles.commonTitle}>
               Tags are visible to others and will help in better search
-              experience on SBO.
+              experience on Smart App.
             </Text>
           </View>
           <Text style={styles.sectionTitle}>Visibility</Text>

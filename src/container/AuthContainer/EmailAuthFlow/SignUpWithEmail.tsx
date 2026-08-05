@@ -158,8 +158,8 @@ const styles = StyleSheet.create({
     marginTop: 100,
   },
   logo: {
-    height: 70,
-    width: 150,
+    height: 100,
+    width: 100,
   },
   forgotTextStyle: {
     fontSize: fontSize.f12,

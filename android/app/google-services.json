@@ -7,12 +7,33 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:70118993511:android:6450129cf79e83ff73aec2",
+        "mobilesdk_app_id": "1:70118993511:android:04397742a8f8704273aec2",
         "android_client_info": {
-          "package_name": "com.sbo.mymall"
+          "package_name": "com.Mymall.smartapp"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "70118993511-nob6oagragpvb2nlj5elm03qq3tla094.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.Mymall.smartapp",
+            "certificate_hash": "44aa4761db0626a09f321f64fb9bdc3bc2fd38dc"
+          }
+        },
+        {
+          "client_id": "70118993511-u05s3qjesmb4b92t5gof7h422qk5htjf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.Mymall.smartapp",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "70118993511-li3e4kvgk3484210hl1amt6sbnoj4reb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBrLgISO9fVH5wfHplpiuOf-5nIBO0bhI8"
@@ -20,7 +41,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "70118993511-li3e4kvgk3484210hl1amt6sbnoj4reb.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "70118993511-rsst0o7ja4smn7tnd9f0u6nr88lc2duv.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.Mymall.smartapp"
+              }
+            }
+          ]
         }
       }
     }

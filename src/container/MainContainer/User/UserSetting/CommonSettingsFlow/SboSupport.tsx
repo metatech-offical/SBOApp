@@ -17,7 +17,7 @@ const SboSupport = ({navigation}: SboSupportProps) => {
       />
       <View style={styles.contentOverlay}>
         <SettingHeader
-          title="SBO Support"
+          title="Smart App Support"
           onBackPress={() => navigation.goBack()}
         />
         <View>

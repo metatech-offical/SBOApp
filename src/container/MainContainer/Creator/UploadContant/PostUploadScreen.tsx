@@ -322,7 +322,7 @@ const PostUploadScreen = ({navigation}: PostUploadScreenProps) => {
           <Text style={styles.tagHelpText}>
             These tags should be separated with comma are for better search
             {'\n'}
-            experience on SBO.
+            experience on Smart App.
           </Text>
 
           {/* Display Tags */}
