@@ -2,7 +2,8 @@ import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {useAppSelector} from '@store/index';
 import {RootState} from '@store/index';
-import {Image, ImageStyle, Platform} from 'react-native';
+import {Image, ImageStyle, Platform, View} from 'react-native';
+import AddPlusButton from '@components/VideosComponent/AddPlusButton';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 // Import Tab Icons
@@ -69,66 +70,69 @@ const useTabBarStyle = () => {
 function CreatorBottomTabNavigator() {
   const tabBarStyle = useTabBarStyle();
   return (
-    <CreatorTab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle,
-        tabBarActiveTintColor: Colors.white,
-        tabBarInactiveTintColor: '#666',
-        tabBarLabelStyle: {
-          fontSize: fontSize.f8,
-          fontFamily: fonts['Poppins-Regular'],
-        },
-      }}>
-      <CreatorTab.Screen
-        name="CreatorHome"
-        component={CreatorHome}
-        options={{
-          tabBarLabel: 'Home',
-          tabBarIcon: getTabIcon(homeIcon, defaultIconStyle),
-        }}
-      />
-      <CreatorTab.Screen
-        name="CreatorTicketing"
-        component={CreatorTicketing}
-        options={{
-          tabBarLabel: 'Ticketing',
-          tabBarIcon: getTabIcon(ticketsIcon, ticketIconStyle),
-        }}
-      />
-      <CreatorTab.Screen
-        name="CreatorVideos"
-        component={CreatorVideos}
-        options={{
-          tabBarLabel: 'Videos',
-          tabBarIcon: getTabIcon(videos, defaultIconStyle),
-        }}
-      />
-      <CreatorTab.Screen
-        name="CreatorStore"
-        component={CreatorStore}
-        options={{
-          tabBarLabel: 'Store',
-          tabBarIcon: getTabIcon(merchandiseIcon, defaultIconStyle),
-        }}
-      />
-      <CreatorTab.Screen
-        name="CreatorExplore"
-        component={CreatorExplore}
-        options={{
-          tabBarLabel: 'Explore',
-          tabBarIcon: getTabIcon(searchIcon, defaultIconStyle),
-        }}
-      />
-      <CreatorTab.Screen
-        name="CreatorProfile"
-        component={CreatorProfile}
-        options={{
-          tabBarLabel: 'Profile',
-          tabBarIcon: getTabIcon(profileIcon, defaultIconStyle),
-        }}
-      />
-    </CreatorTab.Navigator>
+    <View style={{flex: 1}}>
+      <CreatorTab.Navigator
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle,
+          tabBarActiveTintColor: Colors.white,
+          tabBarInactiveTintColor: '#666',
+          tabBarLabelStyle: {
+            fontSize: fontSize.f8,
+            fontFamily: fonts['Poppins-Regular'],
+          },
+        }}>
+        <CreatorTab.Screen
+          name="CreatorHome"
+          component={CreatorHome}
+          options={{
+            tabBarLabel: 'Home',
+            tabBarIcon: getTabIcon(homeIcon, defaultIconStyle),
+          }}
+        />
+        <CreatorTab.Screen
+          name="CreatorTicketing"
+          component={CreatorTicketing}
+          options={{
+            tabBarLabel: 'Ticketing',
+            tabBarIcon: getTabIcon(ticketsIcon, ticketIconStyle),
+          }}
+        />
+        <CreatorTab.Screen
+          name="CreatorVideos"
+          component={CreatorVideos}
+          options={{
+            tabBarLabel: 'Videos',
+            tabBarIcon: getTabIcon(videos, defaultIconStyle),
+          }}
+        />
+        <CreatorTab.Screen
+          name="CreatorStore"
+          component={CreatorStore}
+          options={{
+            tabBarLabel: 'Store',
+            tabBarIcon: getTabIcon(merchandiseIcon, defaultIconStyle),
+          }}
+        />
+        <CreatorTab.Screen
+          name="CreatorExplore"
+          component={CreatorExplore}
+          options={{
+            tabBarLabel: 'Explore',
+            tabBarIcon: getTabIcon(searchIcon, defaultIconStyle),
+          }}
+        />
+        <CreatorTab.Screen
+          name="CreatorProfile"
+          component={CreatorProfile}
+          options={{
+            tabBarLabel: 'Profile',
+            tabBarIcon: getTabIcon(profileIcon, defaultIconStyle),
+          }}
+        />
+      </CreatorTab.Navigator>
+      <AddPlusButton />
+    </View>
   );
 }
 

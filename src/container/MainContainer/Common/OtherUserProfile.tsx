@@ -1,11 +1,9 @@
 import {
   View,
   StyleSheet,
-  ScrollView,
   FlatList,
   Pressable,
   Text,
-  Platform,
 } from 'react-native';
 import React, {useEffect, useCallback, useMemo, useState, useRef} from 'react';
 import {OtherUserProfileProps} from '@navigation/screens';
@@ -13,12 +11,13 @@ import AnimatedBackground from '@components/AnimationComponent/AnimationBackgrou
 import ProfileHeader from '@components/CustomHeaders/ProfileHeader';
 import ProfileDetail from '@components/ScreenLayouts/ProfileComponent/ProfileDetail';
 import ProfileTabUI from '@components/ScreenLayouts/ProfileComponent/ProfileTabUI';
-import {fontSize, hp} from '@constant/fontSize';
+import {fontSize} from '@constant/fontSize';
 import {
   useBlockUnblockUserMutation,
   useGetUserProfileByIdQuery,
   useMarkAccountViewedMutation,
 } from '@rtkServices/ProfileService';
+import {useReportContentMutation} from '@rtkServices/ContentActionService';
 import {MoreIcon} from '@assets/svg/CommonIcons';
 import {useSelector} from 'react-redux';
 import {RootState} from '@store/index';
@@ -27,14 +26,19 @@ import CustomBottomSheet from '@components/CustomBottomSheet/CustomBottomSheet';
 import {BottomSheetModal} from '@gorhom/bottom-sheet';
 import FastImage from 'react-native-fast-image';
 import UnblockModal from '@components/CustomModal/UnBlockModal';
-import {blockUserSheetContent, unblockUserSheetContent} from '@utils/data';
+import {
+  otherProfileSheetContent,
+  unblockUserSheetContent,
+  REPORT_DATA,
+} from '@utils/data';
 import UserBlockSheet from './UserBlockSheet';
-import CustomRefreshControler from '@components/CustomLoader/CustomRefreshControler';
 import NewCommentSheet from '@components/Common/NewCommentSheet';
 import {useGetLiveByUserIDQuery} from '@rtkServices/LiveStreamServices';
 import {useToastMessage} from '@hooks/useToastMessage';
 import {Colors} from '@constant/colors';
 import {fonts} from '@constant/fontfamily';
+import CustomRadioButton from '@components/CustomRadioButton/CustomRadioButton';
+import {shareProfile} from '@utils/helper';
 
 const OtherUserProfile = ({navigation, route}: OtherUserProfileProps) => {
   const {showError, showSuccess} = useToastMessage();
@@ -47,16 +51,18 @@ const OtherUserProfile = ({navigation, route}: OtherUserProfileProps) => {
   const [isBlocked, setIsBlocked] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
   const [showBlockUserDetails, setShowBlockUserDetails] = useState(false);
+  const [showReportSheet, setShowReportSheet] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [currentPostId, setCurrentPostId] = useState('');
   const [blockUser, {isLoading: blockUserLoading}] =
     useBlockUnblockUserMutation();
+  const [reportUser] = useReportContentMutation();
 
   const {
     data,
     isLoading: isProfileLoading,
     refetch,
-    isFetching,
   } = useGetUserProfileByIdQuery({id: userId});
 
   const {data: liveData} = useGetLiveByUserIDQuery({userID: userId});
@@ -79,10 +85,6 @@ const OtherUserProfile = ({navigation, route}: OtherUserProfileProps) => {
       }
     }
   }, [data, user?._id, handleMarkAccountViewed]);
-
-  const handleRefetch = useCallback(async () => {
-    await refetch();
-  }, [refetch]);
 
   const handleBlockUser = useCallback(async () => {
     try {
@@ -126,8 +128,48 @@ const OtherUserProfile = ({navigation, route}: OtherUserProfileProps) => {
     [],
   );
 
-  const handleUnblockPress = (user: any) => {
+  const handleUnblockPress = () => {
     setModalVisible(true);
+  };
+
+  const handleShareProfile = useCallback(async () => {
+    setBlockUserSheet(false);
+    await shareProfile(profileData);
+  }, [profileData]);
+
+  const handleReportProfile = useCallback(async () => {
+    const reasonLabel = selectedFilter?.label;
+    if (!reasonLabel) {
+      showError('Please select a reason.');
+      return;
+    }
+    const body = {
+      contentId: userId,
+      reason: reasonLabel,
+      contentType: 'users',
+      description: 'profile report',
+    };
+    await reportUser(body).then((res: any) => {
+      if (res?.data) {
+        setBlockUserSheet(false);
+        setShowReportSheet(false);
+        setSelectedFilter(null);
+        showSuccess(res?.data?.message || 'Profile reported');
+      }
+      if (res?.error) {
+        showError(res?.error?.data?.message || 'Something went wrong');
+      }
+    });
+  }, [selectedFilter, userId, reportUser, showError, showSuccess]);
+
+  const handleProfileAction = (action: string) => {
+    if (action === 'share') {
+      handleShareProfile();
+    } else if (action === 'report') {
+      setShowReportSheet(true);
+    } else if (action === 'block') {
+      setShowBlockUserDetails(true);
+    }
   };
 
   const RenderBlockUserSheet = useCallback(() => {
@@ -138,7 +180,7 @@ const OtherUserProfile = ({navigation, route}: OtherUserProfileProps) => {
             data={unblockUserSheetContent}
             renderItem={({item}) => (
               <Pressable
-                onPress={() => handleUnblockPress(profileData)}
+                onPress={handleUnblockPress}
                 style={styles.blockUserSheetContainer}>
                 <FastImage
                   source={item.icon}
@@ -154,25 +196,48 @@ const OtherUserProfile = ({navigation, route}: OtherUserProfileProps) => {
             onBlockPress={handleBlockUser}
             isLoading={blockUserLoading}
           />
+        ) : showReportSheet ? (
+          <View style={styles.reportSheetContent}>
+            <CustomRadioButton
+              data={REPORT_DATA}
+              selectedFilter={selectedFilter?.value}
+              onPress={(item: any) => setSelectedFilter(item)}
+              customTitleStyle={{}}
+            />
+          </View>
         ) : (
           <FlatList
-            data={blockUserSheetContent}
+            data={otherProfileSheetContent}
             renderItem={({item}) => (
               <Pressable
-                onPress={() => setShowBlockUserDetails(true)}
+                onPress={() => handleProfileAction(item.action)}
                 style={styles.blockUserSheetContainer}>
                 <FastImage
                   source={item.icon}
                   style={styles.blockUserSheetIcon}
                 />
-                <Text style={styles.blockUserSheetText}>{item.title}</Text>
+                <Text
+                  style={[
+                    styles.blockUserSheetText,
+                    {color: item.color || '#D13C50'},
+                  ]}>
+                  {item.title}
+                </Text>
               </Pressable>
             )}
           />
         )}
       </View>
     );
-  }, [showBlockUserDetails, isBlocked]);
+  }, [
+    showBlockUserDetails,
+    showReportSheet,
+    isBlocked,
+    selectedFilter,
+    profileData,
+    blockUserLoading,
+    handleBlockUser,
+  ]);
 
   const handleCommentPress = (postId: string) => {
     setCurrentPostId(postId);
@@ -199,15 +264,7 @@ const OtherUserProfile = ({navigation, route}: OtherUserProfileProps) => {
         {isProfileLoading ? (
           <Loader visible={isProfileLoading} />
         ) : (
-          <ScrollView
-            refreshControl={
-              <CustomRefreshControler
-                refreshing={isFetching}
-                onRefresh={handleRefetch}
-              />
-            }
-            showsVerticalScrollIndicator={false}
-            style={{flexGrow: 1}}>
+          <View style={styles.body}>
             {profileData && (
               <ProfileDetail
                 profileData={profileData}
@@ -227,24 +284,30 @@ const OtherUserProfile = ({navigation, route}: OtherUserProfileProps) => {
                 />
               </View>
             )}
-          </ScrollView>
+          </View>
         )}
       </View>
 
       {blockUserSheet && (
         <CustomBottomSheet
-          label={''}
+          label={showReportSheet ? 'Report Profile' : ''}
           ref={blockUserSheetRef}
-          index={showBlockUserDetails ? 3 : 1}
+          index={showBlockUserDetails || showReportSheet ? 3 : 2}
           renderView={RenderBlockUserSheet}
           containerStyle={{backgroundColor: '#251E37'}}
+          submitLabel="Submit"
+          onSubmit={showReportSheet ? handleReportProfile : undefined}
           onClose={() => {
             setBlockUserSheet(false);
             setShowBlockUserDetails(false);
+            setShowReportSheet(false);
+            setSelectedFilter(null);
           }}
           onPress={() => {
             setBlockUserSheet(false);
             setShowBlockUserDetails(false);
+            setShowReportSheet(false);
+            setSelectedFilter(null);
           }}
         />
       )}
@@ -278,19 +341,16 @@ const styles = StyleSheet.create({
     position: 'relative',
     flex: 1,
   },
-  tabContainer: {
-    marginTop: 20,
+  body: {
     flex: 1,
   },
   profileTabContainer: {
-    marginTop: 20,
     flex: 1,
+    marginTop: 8,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     backgroundColor: '#00000057',
-    borderWidth: 2,
-    borderColor: '#FFFFFF1A',
-    height: hp('81'),
+    overflow: 'hidden',
   },
   profileTabHeader: {
     flexDirection: 'row',
@@ -323,5 +383,8 @@ const styles = StyleSheet.create({
     fontSize: fontSize.f16,
     fontFamily: fonts['Poppins-Medium'],
     color: '#D13C50',
+  },
+  reportSheetContent: {
+    marginTop: 10,
   },
 });

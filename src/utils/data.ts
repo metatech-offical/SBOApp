@@ -617,6 +617,29 @@ export const PROFILE_TAB_DATA = [
     title: 'Playlist',
   },
 ];
+export const otherProfileSheetContent = [
+  {
+    id: 1,
+    title: 'Share Profile',
+    action: 'share',
+    icon: require('../assets/images/shareIcon.png'),
+    color: '#FFFFFF',
+  },
+  {
+    id: 2,
+    title: 'Report Profile',
+    action: 'report',
+    icon: require('../assets/images/danger.png'),
+    color: '#D13C50',
+  },
+  {
+    id: 3,
+    title: 'Block Profile',
+    action: 'block',
+    icon: require('../assets/images/blockIcon.png'),
+    color: '#D13C50',
+  },
+];
 export const blockUserSheetContent = [
   {
     id: 1,

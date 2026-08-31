@@ -12,29 +12,34 @@ import {Colors} from '@constant/colors';
 import {fonts} from '@constant/fontfamily';
 import {BasketIcon, EditProfileIcon} from '@assets/svg/ProfileScreenIcon';
 import {TicketIcon} from '@assets/svg/HomeScreenIcon';
+import {ShareIcon} from '@assets/svg/CommonIcons';
 import {useFollowUnfollowUserMutation} from '@rtkServices/ContentActionService';
+import {useGetUserContentByIdQuery} from '@rtkServices/ProfileService';
 import {navigate} from '@navigation/utils';
 import {useUnsubscribeFromCreatorMutation} from '@rtkServices/SubcriptionService';
 import {Stream} from '@rtkServices/LiveStreamServices/LiveServices';
 import {useToastMessage} from '@hooks/useToastMessage';
+import {formatCount, shareProfile} from '@utils/helper';
 
-const ProfileActionButton = ({
-  title,
+const ProfileIconButton = ({
+  label,
   icon,
-  style,
   onPress,
+  disabled,
 }: {
-  title: string;
-  icon?: any;
-  style?: any;
+  label: string;
+  icon: React.ReactNode;
   onPress?: () => void;
+  disabled?: boolean;
 }) => {
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={[styles.actionButtonContainer, style]}>
-      <Text style={styles.actionButtonText}>{title}</Text>
-      {icon && icon}
+      disabled={disabled}
+      activeOpacity={0.8}
+      style={[styles.iconActionButton, disabled && styles.disabledButton]}>
+      {icon}
+      <Text style={styles.iconActionLabel}>{label}</Text>
     </TouchableOpacity>
   );
 };
@@ -55,6 +60,22 @@ const ProfileDetail = React.memo(
     const [followAndUnfollow] = useFollowUnfollowUserMutation();
     const [following, setFollowing] = useState(profileData?.isFollowing);
     const [unsubscribe] = useUnsubscribeFromCreatorMutation();
+    const {data: postsData} = useGetUserContentByIdQuery(
+      {
+        id: profileData?._id,
+        types: 'posts',
+        page: 1,
+        limit: 1,
+        search: '',
+      },
+      {skip: !profileData?._id},
+    );
+
+    const postsCount =
+      profileData?.postsCount ??
+      postsData?.data?.pagination?.totalRecords ??
+      0;
+
     const handleFollowToggle = useCallback(async () => {
       try {
         const payload = {targetUserId: profileData?._id};
@@ -73,7 +94,7 @@ const ProfileDetail = React.memo(
       } catch (error) {
         // Optionally handle error
       }
-    }, [followAndUnfollow, profileData._id]);
+    }, [followAndUnfollow, profileData._id, showError]);
 
     const handleUnsubscribe = () => {
       unsubscribe({creatorId: profileData?._id})
@@ -100,6 +121,31 @@ const ProfileDetail = React.memo(
       if (liveData && liveData?.length > 0) {
         navigate('LiveViewer', {liveID: liveData[0]?._id});
       }
+    };
+
+    const openFollowList = (type: 'followers' | 'following') => {
+      navigate('FollowAndFollowing', {
+        userId: profileData?._id,
+        type,
+      });
+    };
+
+    const openStore = () => {
+      if (profileType === 'other') {
+        navigate('OtherUserStoreScreen', {
+          storeId: profileData?.storeId,
+          name: profileData?.displayName || profileData?.username,
+          profilePicture: profileData?.profilePicture || null,
+        });
+      } else {
+        navigate('CreatorStore', {});
+      }
+    };
+
+    const openTickets = () => {
+      navigate('CreatorTicketingScreen', {
+        creatorId: profileData?._id,
+      });
     };
 
     return (
@@ -130,37 +176,32 @@ const ProfileDetail = React.memo(
             {profileData?.displayName || profileData?.username || 'No Name'}
           </Text>
         </View>
+        {!!profileData?.username && (
+          <Text style={styles.handleStyle}>@{profileData.username}</Text>
+        )}
 
         {profileData?.bio && (
           <Text style={styles.desStyle}>{profileData?.bio || 'No bio'}</Text>
         )}
 
         <View style={styles.followingContainer}>
-          {profileType !== 'user' && (
-            <Pressable
-              onPress={() => {
-                navigate('FollowAndFollowing', {
-                  userId: profileData?._id,
-                  type: 'followers',
-                });
-              }}
-              style={styles.followCountItem}>
-              <Text style={styles.followingCount}>
-                {profileData?.followersCount || 0}
-              </Text>
-              <Text style={styles.followingText}>Followers</Text>
-            </Pressable>
-          )}
+          <View style={styles.followCountItem}>
+            <Text style={styles.followingCount}>{formatCount(postsCount)}</Text>
+            <Text style={styles.followingText}>Posts</Text>
+          </View>
           <Pressable
-            onPress={() => {
-              navigate('FollowAndFollowing', {
-                userId: profileData?._id,
-                type: 'following',
-              });
-            }}
+            onPress={() => openFollowList('followers')}
             style={styles.followCountItem}>
             <Text style={styles.followingCount}>
-              {profileData?.followingCount || 0}
+              {formatCount(profileData?.followersCount)}
+            </Text>
+            <Text style={styles.followingText}>Followers</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => openFollowList('following')}
+            style={styles.followCountItem}>
+            <Text style={styles.followingCount}>
+              {formatCount(profileData?.followingCount)}
             </Text>
             <Text style={styles.followingText}>Following</Text>
           </Pressable>
@@ -198,62 +239,31 @@ const ProfileDetail = React.memo(
         {(profileType === 'other' || profileType === 'creator') &&
           !isBlocked && (
             <View style={styles.actionButtonsContainer}>
-              <ProfileActionButton
-                onPress={() => {
-                  if (profileType === 'other') {
-                    navigate('OtherUserStoreScreen', {
-                      storeId: profileData?.storeId,
-                      name: profileData?.displayName || profileData?.username,
-                      profilePicture: profileData?.profilePicture || null,
-                    });
-                  } else {
-                    navigate('CreatorStore', {});
-                  }
-                }}
-                title="Visit store"
-                icon={<BasketIcon width={20} height={20} />}
-                style={
-                  profileData?.storeId
-                    ? profileType === 'other'
-                      ? styles.actionButtonOther
-                      : styles.actionButtonCreator
-                    : [
-                        profileType === 'other'
-                          ? styles.actionButtonOther
-                          : styles.actionButtonCreator,
-                        styles.disabledButton,
-                      ]
-                }
+              <ProfileIconButton
+                label="Store"
+                disabled={!profileData?.storeId && profileType === 'other'}
+                onPress={openStore}
+                icon={<BasketIcon width={20} height={20} stroke={Colors.white} />}
               />
-              <ProfileActionButton
-                onPress={() => {
-                  if (profileType === 'other') {
-                    navigate('CreatorTicketingScreen', {
-                      creatorId: profileData?._id,
-                    });
-                  } else {
-                    navigate('CreatorTicketingScreen', {
-                      creatorId: profileData?._id,
-                    });
-                  }
-                }}
-                style={
-                  profileType === 'other'
-                    ? styles.actionButtonOther
-                    : styles.actionButtonCreator
+              <ProfileIconButton
+                label="Tickets"
+                onPress={openTickets}
+                icon={
+                  <TicketIcon width={20} height={20} stroke={Colors.white} />
                 }
-                title="Tickets"
-                icon={<TicketIcon width={20} height={20} stroke={'#8800FF'} />}
               />
               {profileType === 'creator' && (
-                <TouchableOpacity
-                  onPress={() => {
-                    navigate('EditProfileScreen', {});
-                  }}
-                  style={styles.editProfileButtonContainer}>
-                  <EditProfileIcon width={20} height={20} />
-                </TouchableOpacity>
+                <ProfileIconButton
+                  label="Edit"
+                  onPress={() => navigate('EditProfileScreen', {})}
+                  icon={<EditProfileIcon width={20} height={20} />}
+                />
               )}
+              <ProfileIconButton
+                label="Share"
+                onPress={() => shareProfile(profileData)}
+                icon={<ShareIcon width={20} height={20} />}
+              />
             </View>
           )}
       </View>
@@ -264,11 +274,11 @@ const ProfileDetail = React.memo(
 export default ProfileDetail;
 const styles = StyleSheet.create({
   container: {
-    marginTop: 20,
+    marginTop: 4,
   },
   userImageStyle: {
-    width: wp('35%'),
-    height: wp('35%'),
+    width: wp('22%'),
+    height: wp('22%'),
     alignSelf: 'center',
     borderRadius: 100,
   },
@@ -277,8 +287,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.green,
   },
   userImageContainer: {
-    width: wp('35%'),
-    height: wp('35%'),
+    width: wp('22%'),
+    height: wp('22%'),
     alignSelf: 'center',
   },
   liveIconContainer: {
@@ -301,13 +311,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   userNameStyle: {
-    fontSize: fontSize.f30,
+    fontSize: fontSize.f20,
     color: Colors.white,
     fontFamily: fonts['Poppins-SemiBold'],
     textAlign: 'center',
-    marginTop: 10,
+    marginTop: 6,
     paddingHorizontal: wp('4%'),
     maxWidth: '100%',
+  },
+  handleStyle: {
+    fontSize: fontSize.f12,
+    color: Colors.grey,
+    fontFamily: fonts['Poppins-Medium'],
+    textAlign: 'center',
+    marginTop: 2,
   },
   desStyle: {
     fontSize: fontSize.f12,
@@ -315,71 +332,55 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontFamily: fonts['Poppins-Medium'],
     textAlign: 'center',
+    paddingHorizontal: wp('8%'),
   },
   actionButtonsContainer: {
     flexDirection: 'row',
-    gap: 10,
+    justifyContent: 'center',
+    gap: 14,
     paddingHorizontal: wp('4%'),
-    marginTop: hp('3%'),
-    marginBottom: hp('2%'),
-  },
-  actionButtonOther: {
-    width: wp('45%'),
-  },
-  actionButtonCreator: {
-    width: wp('37%'),
+    marginTop: hp('1.2%'),
+    marginBottom: hp('0.5%'),
   },
   disabledButton: {
-    opacity: 0.5,
+    opacity: 0.4,
   },
   followingContainer: {
-    paddingHorizontal: wp('4%'),
+    paddingHorizontal: wp('8%'),
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: hp('1%'),
-    gap: 20,
+    justifyContent: 'space-around',
+    marginTop: hp('1.2%'),
   },
   followCountItem: {
     alignItems: 'center',
+    minWidth: wp('20%'),
   },
   followingCount: {
-    fontSize: fontSize.f22,
+    fontSize: fontSize.f18,
     color: Colors.white,
     fontFamily: fonts['Poppins-SemiBold'],
   },
   followingText: {
-    fontSize: fontSize.f16,
+    fontSize: fontSize.f12,
     color: Colors.grey,
     fontFamily: fonts['Poppins-Medium'],
   },
-  actionButtonContainer: {
-    flexDirection: 'row',
-    gap: 10,
+  iconActionButton: {
     backgroundColor: '#0000001F',
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    width: wp('37%'),
-    height: wp('10%'),
-    borderWidth: 2,
+    width: wp('18%'),
+    height: wp('16%'),
+    borderWidth: 1,
     borderColor: '#FFFFFF1A',
+    gap: 4,
   },
-  actionButtonText: {
-    fontSize: fontSize.f14,
+  iconActionLabel: {
+    fontSize: fontSize.f10,
     color: Colors.white,
     fontFamily: fonts['Poppins-Medium'],
-  },
-  editProfileButtonContainer: {
-    backgroundColor: '#0000001F',
-    padding: 10,
-    borderRadius: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: wp('10%'),
-    height: wp('10%'),
-    borderWidth: 2,
-    borderColor: '#FFFFFF1A',
   },
   followButtonContainer: {
     flexDirection: 'row',
@@ -400,14 +401,6 @@ const styles = StyleSheet.create({
     height: 35,
     alignSelf: 'center',
     justifyContent: 'center',
-  },
-  followButton: {
-    backgroundColor: 'transparent',
-    borderRadius: 30,
-    paddingVertical: 5,
-    paddingHorizontal: 40,
-    borderWidth: 2,
-    borderColor: '#1AD655',
   },
   followButtonText: {
     fontSize: fontSize.f14,

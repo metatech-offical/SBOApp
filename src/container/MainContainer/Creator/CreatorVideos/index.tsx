@@ -10,7 +10,6 @@ import ShortsScreen from '@components/ScreenLayouts/CreatorVideos/ShortsScreen';
 import {BottomArrowIcon, TopArrowIcon} from '@assets/svg/CommonIcons';
 import CategoryModal from '@components/ScreenLayouts/CreatorVideos/CategoryModal';
 import LiveVideosScreen from '@components/ScreenLayouts/CreatorVideos/LiveVideosScreen';
-import AddPlusButton from '@components/VideosComponent/AddPlusButton';
 import Loader from '@components/CustomLoader/Loader';
 import {Colors} from '@constant/colors';
 import {fontSize} from '@constant/fontSize';
@@ -36,10 +35,6 @@ const CreatorVideos = ({navigation}: CreatorVideosProps) => {
 
   const toggleCategoryModal = () => {
     setIsCategoriesModalVisible(!isCategoriesModalVisible);
-  };
-
-  const goToUploadContent = () => {
-    navigation.navigate('UploadContent' as any);
   };
 
   // Static 2-second loading
@@ -91,8 +86,6 @@ const CreatorVideos = ({navigation}: CreatorVideosProps) => {
       </View>
       {isLoading ? <Loader visible={isLoading} /> : renderContent()}
 
-      {/* Add Button */}
-      <AddPlusButton onPress={goToUploadContent} />
       <CategoryModal
         visible={isCategoriesModalVisible}
         onClose={toggleCategoryModal}

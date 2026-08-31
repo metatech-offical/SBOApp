@@ -1,24 +1,22 @@
-import {ScrollView, StyleSheet, View} from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
+import {StyleSheet, View} from 'react-native';
+import React, {useEffect, useState} from 'react';
 import {UserProfileProps} from '@navigation/screens';
 import AnimatedBackground from '@components/AnimationComponent/AnimationBackground';
 import ProfileHeader from '@components/CustomHeaders/ProfileHeader';
 import ProfileDetail from '@components/ScreenLayouts/ProfileComponent/ProfileDetail';
 import ProfileTabUI from '@components/ScreenLayouts/ProfileComponent/ProfileTabUI';
-import {hp} from '@constant/fontSize';
 import {navigate} from '@navigation/utils';
 import {useSelector} from 'react-redux';
 import {RootState} from '@store/index';
 import {useGetUserProfileByIdQuery} from '@rtkServices/ProfileService';
 import Loader from '@components/CustomLoader/Loader';
-import CustomRefreshControler from '@components/CustomLoader/CustomRefreshControler';
 import LinearGradient from 'react-native-linear-gradient';
 
 const UserProfile = ({navigation}: UserProfileProps) => {
   const {user} = useSelector((state: RootState) => state.user);
   const [profileData, setProfileData] = useState<UserProfile | null>(null);
 
-  const {data, isLoading, refetch, isFetching} = useGetUserProfileByIdQuery({
+  const {data, isLoading} = useGetUserProfileByIdQuery({
     id: user?._id,
   });
 
@@ -27,10 +25,6 @@ const UserProfile = ({navigation}: UserProfileProps) => {
       setProfileData(data?.data);
     }
   }, [data?.data]);
-
-  const handleRefetch = useCallback(async () => {
-    await refetch();
-  }, [refetch]);
 
   return (
     <View style={styles.container}>
@@ -48,27 +42,18 @@ const UserProfile = ({navigation}: UserProfileProps) => {
         {isLoading ? (
           <Loader visible={isLoading} />
         ) : (
-          <ScrollView
-            refreshControl={
-              <CustomRefreshControler
-                refreshing={isFetching}
-                onRefresh={handleRefetch}
-              />
-            }
-            showsVerticalScrollIndicator={false}
-            style={{flexGrow: 1 , }}>
+          <View style={styles.body}>
             {profileData && (
               <ProfileDetail profileType="user" profileData={profileData} />
             )}
-
             <View style={styles.profileTabContainer}>
               <LinearGradient
                 colors={['#00000057', 'transparent']}
-                style={styles.linearGradientContainer}/>
-        
+                style={styles.linearGradientContainer}
+              />
               <ProfileTabUI profileType="user" />
             </View>
-          </ScrollView>
+          </View>
         )}
       </View>
     </View>
@@ -85,24 +70,15 @@ const styles = StyleSheet.create({
     position: 'relative',
     flex: 1,
   },
-  tabContainer: {
-    marginTop: 20,
+  body: {
     flex: 1,
   },
   profileTabContainer: {
-    marginTop: hp('5'),
     flex: 1,
+    marginTop: 8,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    // backgroundColor: '#00000057',
-    borderWidth: 1,
-    borderColor: '#FFFFFF1A',
     overflow: 'hidden',
-    height: hp('45'),
-    borderBottomWidth: 0,
-   
-    borderLeftWidth: 0.5,
-    borderRightWidth: 0.5,
   },
   profileTabHeader: {
     flexDirection: 'row',

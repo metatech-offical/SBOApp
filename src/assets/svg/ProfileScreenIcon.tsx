@@ -13,21 +13,21 @@ export const BasketIcon = (props: SvgProps) => (
     <G clipPath="url(#clip0_876_25306)">
       <Path
         d="M3.93766 6.25H13.562C13.7602 6.24998 13.9561 6.29282 14.1363 6.37561C14.3164 6.45839 14.4765 6.57915 14.6056 6.7296C14.7347 6.88006 14.8298 7.05665 14.8842 7.24728C14.9387 7.4379 14.9513 7.63805 14.9212 7.834L14.0584 12.751C13.9834 13.2381 13.7366 13.6822 13.3626 14.003C12.9886 14.3238 12.512 14.5001 12.0192 14.5H5.47973C4.98706 14.5 4.51068 14.3236 4.13678 14.0028C3.76289 13.682 3.51617 13.2379 3.44129 12.751L2.57848 7.834C2.54834 7.63805 2.56094 7.4379 2.6154 7.24728C2.66986 7.05665 2.7649 6.88006 2.894 6.7296C3.0231 6.57915 3.18321 6.45839 3.36336 6.37561C3.5435 6.29282 3.73941 6.24998 3.93766 6.25Z"
-        stroke="#FFE526"
+        stroke={props.stroke || '#FFE526'}
         strokeWidth={1.375}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <Path
         d="M12.1875 7.625L10.8125 3.5"
-        stroke="#FFE526"
+        stroke={props.stroke || '#FFE526'}
         strokeWidth={1.375}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <Path
         d="M5.3125 7.625L6.6875 3.5"
-        stroke="#FFE526"
+        stroke={props.stroke || '#FFE526'}
         strokeWidth={1.375}
         strokeLinecap="round"
         strokeLinejoin="round"

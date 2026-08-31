@@ -25,7 +25,7 @@ const ProfileHeader = ({
         <TouchableOpacity onPress={onBackPress} style={styles.icon} hitSlop={20}>
           <BackArrow color={Colors.white} height={20} width={20} />
           <FastImage
-            source={require('@assets/images/appLogo2.png')}
+            source={require('@assets/images/appLogo-transparent.png')}
             style={styles.logo}
             resizeMode={FastImage.resizeMode.contain}
           />

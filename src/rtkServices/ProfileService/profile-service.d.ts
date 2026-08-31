@@ -37,6 +37,7 @@ interface UserProfile {
   isFollowing: boolean;
   followersCount: number;
   followingCount: number;
+  postsCount?: number;
   isLive: boolean;
   isViewed: boolean;
   isSubscribed: boolean;

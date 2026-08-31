@@ -80,7 +80,7 @@ const ResetPassword = ({navigation, route}: ResetPasswordProps) => {
       />
       <View style={styles.logoContainer}>
         <FastImage
-          source={require('@assets/images/appLogo2.png')}
+          source={require('@assets/images/appLogo-transparent.png')}
           style={styles.logo}
           resizeMode="contain"
         />

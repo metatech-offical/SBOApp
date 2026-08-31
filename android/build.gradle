@@ -1,11 +1,12 @@
 buildscript {
     ext {
         // Stripe RN SDK requires compileSdk 36+
+        // Play Console: target Android 16 (API 36); NDK r28+ for 16 KB page sizes
         buildToolsVersion = "36.0.0"
         minSdkVersion = 24
         compileSdkVersion = 36
-        targetSdkVersion = 35
-        ndkVersion = "27.1.12297006"
+        targetSdkVersion = 36
+        ndkVersion = "28.2.13676358"
         // Stripe Android SDK 23.x ships Kotlin 2.2 metadata
         kotlinVersion = "2.2.21"
     }

@@ -82,7 +82,7 @@ export default function ProfileTabUI({
       {profileType === 'user' ? (
         <CreatorProfileRoute />
       ) : (
-        <>
+        <View style={styles.tabContent}>
           {activeStep === 1 ? (
             <HomeProfileTab userId={userId} />
           ) : activeStep === 2 ? (
@@ -101,7 +101,7 @@ export default function ProfileTabUI({
           ) : (
             <PlaylistProfileTab userId={userId} />
           )}
-        </>
+        </View>
       )}
     </View>
   );
@@ -110,10 +110,8 @@ export default function ProfileTabUI({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: hp('4'),
+    marginTop: 4,
     width: '100%',
-    // paddingBottom: 100,
-    // backgroundColor: '#1a1a1a',
   },
   tabBar: {
     backgroundColor: 'transparent',
@@ -234,5 +232,8 @@ const styles = StyleSheet.create({
   stepContainerWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  tabContent: {
+    flex: 1,
   },
 });
