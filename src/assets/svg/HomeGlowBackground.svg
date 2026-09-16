@@ -1,0 +1,30 @@
+<svg width="393" height="1441" viewBox="0 0 393 1441" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g clip-path="url(#clip0_home_glow)">
+    <rect width="393" height="1441" fill="url(#paint0_linear_home_glow)"/>
+    <g filter="url(#filter0_f_home_glow)">
+      <path d="M-36.6494 71.8469C-16.6226 84.481 1.38531 79.9784 17.3742 58.3392C33.3631 36.6999 49.1425 33.3794 64.7124 48.3775C80.2823 63.3757 89.6545 81.8143 92.8292 103.693C96.0038 125.572 101.479 142.559 109.253 154.653C117.028 166.748 122.066 179.835 124.368 193.915C126.669 207.995 126.067 221.473 122.563 234.348C119.058 247.223 119.593 264.382 124.168 285.824C128.742 307.267 122.525 319.898 105.515 323.718C88.5045 327.538 72.9784 331.337 58.9364 335.113C44.8943 338.889 30.8639 337.303 16.8452 330.357C2.82654 323.41 -9.87762 316.378 -21.2673 309.261C-32.6569 302.144 -46.6156 296.848 -63.1434 293.375C-79.6711 289.901 -95.2133 281.62 -109.77 268.533C-124.326 255.445 -128.786 239.603 -123.149 221.006C-117.512 202.41 -118.127 183.305 -124.996 163.691C-131.864 144.077 -130.384 126.615 -120.557 111.304C-110.729 95.9929 -99.2948 82.4304 -86.2527 70.6166C-73.2107 58.8026 -56.6763 59.2128 -36.6494 71.8469Z" fill="#1AD655"/>
+    </g>
+    <g opacity="0.6" filter="url(#filter1_f_home_glow)">
+      <rect x="-190" y="233.366" width="153.054" height="137.703" rx="68.8515" transform="rotate(-59.8859 -190 233.366)" fill="#8800FF"/>
+    </g>
+  </g>
+  <defs>
+    <filter id="filter0_f_home_glow" x="-352.734" y="-184.332" width="701.97" height="744.939" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+      <feGaussianBlur stdDeviation="111.75" result="effect1_foregroundBlur_home_glow"/>
+    </filter>
+    <filter id="filter1_f_home_glow" x="-358.705" y="-67.7351" width="533.318" height="538.896" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+      <feGaussianBlur stdDeviation="96.9726" result="effect1_foregroundBlur_home_glow_purple"/>
+    </filter>
+    <linearGradient id="paint0_linear_home_glow" x1="23" y1="-46.5111" x2="996.53" y2="1326.34" gradientUnits="userSpaceOnUse">
+      <stop offset="0.00176594" stop-color="#1A0A47"/>
+      <stop offset="1" stop-color="#100E12"/>
+    </linearGradient>
+    <clipPath id="clip0_home_glow">
+      <rect width="393" height="1441" fill="white"/>
+    </clipPath>
+  </defs>
+</svg>

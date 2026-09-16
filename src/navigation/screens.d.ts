@@ -215,7 +215,12 @@ export type MainStackParamList = {
     };
   };
   PostUploadScreen: undefined;
-  ShortsFeed: {shortsId: string; type?: string; creatorId?: string};
+  ShortsFeed: {
+    shortsId: string;
+    type?: string;
+    creatorId?: string;
+    feedItems?: any[];
+  };
   AddToPlaylist: {
     playlistName: string;
     playlistId: string;

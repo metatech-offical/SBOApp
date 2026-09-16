@@ -1,4 +1,4 @@
-import AnimationBackground from '@components/AnimationComponent/AnimationBackground';
+import GlowBackground from '@components/AnimationComponent/GlowBackground';
 import NodataFound from '@components/DataEmpty/NodataFound';
 import {OrderHistoryProps} from '@navigation/screens';
 import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
@@ -9,9 +9,13 @@ import {fonts} from '@constant/fontfamily';
 import {fontSize} from '@constant/fontSize';
 import SettingHeader from '@components/CustomHeaders/SettingHeader';
 import {Colors} from '@constant/colors';
+import {DUMMY_HOME_ORDERS} from '@utils/dummyHome';
 
 const OrderHistory = ({navigation}: OrderHistoryProps) => {
   const {data, isLoading} = useGetOrderHistoryQuery({page: 1, limit: 10});
+  const orders = data?.data?.orders?.length
+    ? data.data.orders
+    : DUMMY_HOME_ORDERS;
 
   const handleOrderPress = (orderId: string) => {
     navigation.navigate('OrderDetailScreen', {
@@ -22,11 +26,7 @@ const OrderHistory = ({navigation}: OrderHistoryProps) => {
 
   return (
     <View style={styles.container}>
-      <AnimationBackground
-        animationSource={require('@assets/animations/AuthAnimation4.json')}
-        backgroundColor={'#1a1538'}
-        zIndex={0}
-      />
+      <GlowBackground />
       <View style={styles.contentOverlay}>
         <SettingHeader
           title="Order History"
@@ -35,9 +35,9 @@ const OrderHistory = ({navigation}: OrderHistoryProps) => {
 
         {isLoading ? (
           <Loader visible={isLoading} />
-        ) : data?.data?.orders && data?.data?.orders?.length > 0 ? (
+        ) : orders.length > 0 ? (
           <OrderHistorySection
-            orders={data?.data?.orders}
+            orders={orders}
             onOrderPress={handleOrderPress}
           />
         ) : (

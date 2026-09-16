@@ -2,6 +2,7 @@ import {fonts} from '@constant/fontfamily';
 import React, {useCallback, useRef, useState} from 'react';
 import {View, Text, StyleSheet, FlatList, Pressable} from 'react-native';
 import LiveVideoCard from '@components/VideosComponent/LiveVideoCard';
+import CustomCarosal from '@components/VideosComponent/CustomCarosal';
 import {useGetAllLiveStreamsQuery} from '@rtkServices/LiveStreamServices';
 import CustomRefreshControler from '@components/CustomLoader/CustomRefreshControler';
 import {Stream} from '@rtkServices/LiveStreamServices/LiveServices';
@@ -19,7 +20,8 @@ import {Colors} from '@constant/colors';
 import CustomRadioButton from '@components/CustomRadioButton/CustomRadioButton';
 import {SCREEN_HEIGHT} from '@gorhom/bottom-sheet';
 import {useToastMessage} from '@hooks/useToastMessage';
-import { fontSize } from '@constant/fontSize';
+import {fontSize} from '@constant/fontSize';
+import {DUMMY_LIVE_STREAMS} from '@utils/dummyVideos';
 
 const LiveVideosScreen = () => {
   const {showError, showSuccess} = useToastMessage();
@@ -168,12 +170,21 @@ const LiveVideosScreen = () => {
       }
     });
   };
+  const liveStreams =
+    (data?.data?.streams?.length ? data.data.streams : DUMMY_LIVE_STREAMS) ||
+    [];
+
   return (
     <View style={styles.container}>
       <View style={styles.mainContainer}>
         <FlatList
-          data={data?.data?.streams || []}
+          data={liveStreams}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            liveStreams.length > 0 ? (
+              <CustomCarosal data={liveStreams} contentType="live" />
+            ) : null
+          }
           ListEmptyComponent={<NodataFound />}
           keyExtractor={item => item._id.toString()}
           renderItem={({item}) => (

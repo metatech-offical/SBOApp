@@ -5,6 +5,7 @@ import {fontSize} from '@constant/fontSize';
 import {Stream} from '@rtkServices/LiveStreamServices/LiveServices';
 import {RootState, useAppSelector} from '@store/index';
 import {getTimeDifference, screenWidth} from '@utils/general';
+import {isDummyReelId} from '@utils/dummyVideos';
 import React from 'react';
 import {View, Text, StyleSheet, Pressable, Image, FlatList} from 'react-native';
 import FastImage from 'react-native-fast-image';
@@ -23,6 +24,9 @@ const LiveVideoCard = ({
   }
 
   function handleItemPress() {
+    if (isDummyReelId(item?._id)) {
+      return;
+    }
     if (item?.isLive) {
       navigation.navigate('LiveViewer', {liveID: item?._id});
     }

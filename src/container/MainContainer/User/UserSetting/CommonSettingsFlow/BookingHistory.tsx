@@ -3,6 +3,8 @@ import {BookingHistoryProps} from '@navigation/screens';
 import SettingHeader from '@components/CustomHeaders/SettingHeader';
 import AnimationBackground from '@components/AnimationComponent/AnimationBackground';
 import NodataFound from '@components/DataEmpty/NodataFound';
+import BookingHistoryCard from '@components/ScreenLayouts/SettingsComponent/BookingHistoryCard';
+import {DUMMY_BOOKING_HISTORY} from '@utils/dummyTicketing';
 
 const BookingHistory = ({navigation}: BookingHistoryProps) => {
   return (
@@ -18,13 +20,13 @@ const BookingHistory = ({navigation}: BookingHistoryProps) => {
           onBackPress={() => navigation.goBack()}
         />
         <FlatList
-          data={[]}
+          data={DUMMY_BOOKING_HISTORY}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{paddingBottom: 100}}
           ListEmptyComponent={<NodataFound />}
+          keyExtractor={item => item.date}
           renderItem={({item}) => (
-            <></>
-            // <BookingHistoryCard date={item.date} cards={item.cards} />
+            <BookingHistoryCard date={item.date} cards={item.cards} />
           )}
         />
       </View>

@@ -19,17 +19,21 @@ import {EditIcon} from '@assets/svg/CommonIcons';
 import {fonts} from '@constant/fontfamily';
 import {Colors} from '@constant/colors';
 import {fontSize} from '@constant/fontSize';
+import FastImage from 'react-native-fast-image';
+import {isDummyReelId} from '@utils/dummyVideos';
 
 const PlayListScreen = ({
   playlist,
   onUpdateSuccess,
   refetch,
   onReportVideo,
+  embedded,
 }: {
   playlist: any;
   onUpdateSuccess?: () => void;
   refetch?: () => void;
   onReportVideo?: () => void;
+  embedded?: boolean;
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
@@ -37,25 +41,29 @@ const PlayListScreen = ({
   const navigation = useNavigation();
   const [editPlaylistName] = useUpdatePlaylistMutation();
   const playlistId = playlist._id;
+  const isDummy = isDummyReelId(playlistId);
   const {user} = useAppSelector((state: RootState) => state.user);
 
   const {
     data: playlistData,
     refetch: refetchPlaylistData,
     isLoading,
-  } = useGetPlaylistByIdQuery({
-    playlistId: playlist._id ?? '',
-  });
+  } = useGetPlaylistByIdQuery(
+    {
+      playlistId: playlist._id ?? '',
+    },
+    {skip: !playlist._id || isDummy},
+  );
 
   useEffect(() => {
-    if (playlistId) {
+    if (playlistId && !isDummy) {
       refetchPlaylistData();
     }
-  }, [playlistId]);
+  }, [playlistId, isDummy, refetchPlaylistData]);
 
   useFocusEffect(
     React.useCallback(() => {
-      if (playlistId) {
+      if (playlistId && !isDummy) {
         refetchPlaylistData();
       }
       return () => {};
@@ -118,13 +126,31 @@ const PlayListScreen = ({
   };
 
   const finalPlayListData = playlistData?.data?.items || [];
+  const videoCount =
+    playlist?.videosCount ??
+    playlist?.itemsCount ??
+    finalPlayListData?.length ??
+    0;
 
   return (
-    <View style={styles.card}>
-      <Pressable onPress={toggleExpand} style={styles.header}>
+    <View style={[styles.card, embedded && styles.profileCard]}>
+      <Pressable onPress={toggleExpand} style={[styles.header, embedded && styles.profileHeader]}>
+        {embedded && (
+          <FastImage
+            source={{
+              uri:
+                playlist?.thumbnailUrl ||
+                finalPlayListData?.[0]?.thumbnailUrl ||
+                'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800',
+            }}
+            style={styles.profileThumb}
+          />
+        )}
         <View
-          style={{flexDirection: 'row', alignItems: 'center', columnGap: 10}}>
-          <Text style={styles.title}>{playlist.title}</Text>
+          style={{flex: 1, flexDirection: 'row', alignItems: 'center', columnGap: 10}}>
+          <Text style={[styles.title, embedded && styles.profileTitle]}>
+            {playlist.title}
+          </Text>
           {expanded && playlistData?.data?.createdBy === user?._id && (
             <Pressable onPress={openCreatePlaylistModal}>
               <EditIcon fill={'#ffffff'} height={15} width={15} />
@@ -132,9 +158,8 @@ const PlayListScreen = ({
           )}
         </View>
         <View style={styles.rightSection}>
-          <Text style={styles.countText}>
-            {finalPlayListData?.length ?? 0}{' '}
-            {finalPlayListData?.length === 1 ? 'video' : 'videos'}
+          <Text style={[styles.countText, embedded && styles.profileCount]}>
+            {videoCount} {videoCount === 1 ? 'video' : 'videos'}
           </Text>
           {expanded ? (
             <ArrowUP width={20} height={20} fill={'#ffffff'} />
@@ -227,16 +252,36 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginHorizontal: 12,
   },
+  profileCard: {
+    marginHorizontal: 0,
+    marginBottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 16,
     alignItems: 'center',
   },
+  profileHeader: {
+    padding: 10,
+    gap: 12,
+  },
+  profileThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: 8,
+  },
   title: {
     fontSize: fontSize.f12,
     color: Colors.white,
     fontFamily: fonts['Poppins-Medium'],
+    flexShrink: 1,
+  },
+  profileTitle: {
+    fontSize: 16,
+    lineHeight: 23,
   },
   rightSection: {
     flexDirection: 'row',
@@ -246,6 +291,11 @@ const styles = StyleSheet.create({
     fontSize: fontSize.f12,
     color: '#aaa',
     marginRight: 6,
+  },
+  profileCount: {
+    fontSize: 11,
+    lineHeight: 14,
+    color: '#B6B6B6',
   },
   icon: {
     marginTop: 1,

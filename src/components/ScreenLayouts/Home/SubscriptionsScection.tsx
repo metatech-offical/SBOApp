@@ -1,36 +1,14 @@
-import {FlatList, Pressable, StyleSheet, Text, View} from 'react-native';
+import {Pressable, StyleSheet, Text, View} from 'react-native';
 import React from 'react';
-import {Colors} from '@constant/colors';
-import {fontSize, wp} from '@constant/fontSize';
-import {fonts} from '@constant/fontfamily';
-import {StarIcon} from '@assets/svg/HomeScreenIcon';
+import {HomeChevronIcon, StarIcon, UsersGroupIcon} from '@assets/svg/HomeScreenIcon';
 import {navigate} from '@navigation/utils';
 import {useGetMySubscribedCreatorsQuery} from '@rtkServices/SubcriptionService';
-import FastImage from 'react-native-fast-image';
-import NodataFound from '@components/DataEmpty/NodataFound';
-import {RightArrowIcon} from '@assets/svg/CommonIcons';
-
-const SubscriptionCard = ({item}: {item: SubscribedCreator}) => {
-  return (
-    <Pressable
-      onPress={() => navigate('OtherUserProfile', {userId: item?._id})}
-      style={styles.subscriptionCard}>
-      {item?.profilePicture ? (
-        <FastImage
-          source={{uri: item?.profilePicture}}
-          style={styles.avatarCircle}
-        />
-      ) : (
-        <View style={styles.viewAllCircle}>
-          <Text style={styles.avatarInitial}>{item?.username?.charAt(0)}</Text>
-        </View>
-      )}
-      <Text numberOfLines={1} style={styles.creatorName}>
-        {item?.username}
-      </Text>
-    </Pressable>
-  );
-};
+import {Colors} from '@constant/colors';
+import {fontSize} from '@constant/fontSize';
+import {fonts} from '@constant/fontfamily';
+import HomeEmptyRow from './HomeEmptyRow';
+import HomeAvatarGrid from './HomeAvatarGrid';
+import {DUMMY_SUBSCRIBED_CREATORS} from '@utils/dummyHome';
 
 export default function SubscriptionsScection() {
   const {data} = useGetMySubscribedCreatorsQuery({
@@ -40,28 +18,55 @@ export default function SubscriptionsScection() {
     sort: 'desc',
   });
 
-  const subscriptionsData = data?.data?.data || [];
+  const apiSubscriptions = data?.data?.data || [];
+  const subscriptionsData =
+    apiSubscriptions.length > 0
+      ? apiSubscriptions
+      : DUMMY_SUBSCRIBED_CREATORS;
+  const totalRecords =
+    apiSubscriptions.length > 0
+      ? data?.data?.total || subscriptionsData.length
+      : DUMMY_SUBSCRIBED_CREATORS.length;
+  const extraCount = Math.max(totalRecords - 7, 0);
+
+  if (subscriptionsData.length > 0) {
+    return (
+      <View style={styles.container}>
+        <HomeAvatarGrid
+          title="My Subscriptions"
+          icon={<StarIcon width={18} height={18} />}
+          items={subscriptionsData.map(item => ({
+            id: item._id,
+            name: item.username,
+            image: item.profilePicture,
+            onPress: () => navigate('OtherUserProfile', {userId: item._id}),
+          }))}
+          extraCount={extraCount}
+          onViewAll={() => navigate('Subscriptions', {})}
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <View style={styles.titleContainer}>
-          <StarIcon width={20} height={20} />
+        <View style={styles.titleRow}>
+          <StarIcon width={18} height={18} />
           <Text style={styles.title}>My Subscriptions</Text>
         </View>
-        <Pressable onPress={() => navigate('Subscriptions', {})}>
-          <RightArrowIcon width={20} height={20} fill={Colors.white} />
+        <Pressable
+          hitSlop={20}
+          onPress={() => navigate('Subscriptions', {})}
+          style={styles.viewAllContainer}>
+          <Text style={styles.seeAll}>View All</Text>
+          <HomeChevronIcon />
         </Pressable>
       </View>
-      <FlatList
-        data={subscriptionsData?.slice(0, 3)}
-        renderItem={({item}) => <SubscriptionCard item={item} />}
-        keyExtractor={(item, index) => `${item?._id}-${index}`}
-        horizontal={false}
-        numColumns={4}
-        ListEmptyComponent={<NodataFound style={{marginTop: -150}} />}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.listContainer}
+      <HomeEmptyRow
+        icon={<UsersGroupIcon width={24} height={24} />}
+        text="You don't have any subscriptions yet."
+        onPress={() => navigate('Subscriptions', {})}
       />
     </View>
   );
@@ -69,69 +74,35 @@ export default function SubscriptionsScection() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF0F',
-    borderRadius: 16,
-    padding: 16,
-    marginHorizontal: 10,
-    marginTop: 20,
+    marginTop: 14,
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    paddingHorizontal: 16,
   },
-  titleContainer: {
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'center',
     gap: 8,
+    flex: 1,
+    paddingRight: 12,
   },
   title: {
     fontSize: fontSize.f16,
     fontFamily: fonts['Poppins-SemiBold'],
     color: Colors.white,
   },
-  listContainer: {
-    paddingVertical: 8,
-  },
-  subscriptionCard: {
+  viewAllContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    width: '25%',
+    gap: 6,
   },
-  avatarCircle: {
-    width: wp('15'),
-    height: wp('15'),
-    borderRadius: wp('10'),
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  avatarInitial: {
-    fontSize: fontSize.f16,
-    fontFamily: fonts['Poppins-Bold'],
-    color: Colors.white,
-    textTransform: 'uppercase',
-  },
-  creatorName: {
+  seeAll: {
     fontSize: fontSize.f12,
     fontFamily: fonts['Poppins-Regular'],
     color: Colors.white,
-    textAlign: 'center',
-    width: '90%',
-  },
-  viewAllCircle: {
-    width: wp('15'),
-    height: wp('15'),
-    borderRadius: wp('10'),
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  viewAllText: {
-    fontSize: fontSize.f14,
-    fontFamily: fonts['Poppins-Medium'],
-    color: Colors.white,
+    opacity: 0.45,
   },
 });

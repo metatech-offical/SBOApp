@@ -14,12 +14,17 @@ import {ViewIcon} from '@assets/svg/CommonIcons';
 import BlurView from '@components/CustomBlurView/BlurView';
 import LinearGradient from 'react-native-linear-gradient';
 import TransparentInnerShadowButton from '@components/CustomButtons/TransparentInnerShadowButton';
-import {fontSize, hp} from '@constant/fontSize';
+import {fontSize} from '@constant/fontSize';
 import NodataFound from '@components/DataEmpty/NodataFound';
 import FastImage from 'react-native-fast-image';
 import {useGetUserContentByIdQuery} from '@rtkServices/ProfileService';
 import {useNavigation} from '@react-navigation/native';
 import Loading from '@components/CustomLoader/Loading';
+import {formatCount} from '@utils/helper';
+import {
+  DUMMY_PROFILE_LATEST,
+  DUMMY_PROFILE_POPULAR,
+} from '@utils/dummyVideos';
 
 interface VideoItem {
   _id: string;
@@ -36,7 +41,15 @@ interface VideoItem {
   videoUrl: string;
 }
 
-const HomeProfileTab = ({userId}: {userId: string | undefined}) => {
+const HomeProfileTab = ({
+  userId,
+  embedded,
+  useDummyFallback,
+}: {
+  userId: string | undefined;
+  embedded?: boolean;
+  useDummyFallback?: boolean;
+}) => {
   const navigation = useNavigation();
   const [activeLatestItemId, setActiveLatestItemId] = useState<string | null>(
     null,
@@ -45,13 +58,16 @@ const HomeProfileTab = ({userId}: {userId: string | undefined}) => {
     null,
   );
   const slideAnimMap = useRef<{[key: string]: Animated.Value}>({}).current;
-  const {data, isLoading} = useGetUserContentByIdQuery({
-    id: userId || '',
-    types: 'home',
-    page: 1,
-    limit: 10,
-    search: '',
-  });
+  const {data, isLoading} = useGetUserContentByIdQuery(
+    {
+      id: userId || '',
+      types: 'home',
+      page: 1,
+      limit: 10,
+      search: '',
+    },
+    {skip: !userId},
+  );
 
   const toggleInfoView = (itemId: string, section: 'latest' | 'popular') => {
     // Initialize animation value for this item if it doesn't exist
@@ -182,8 +198,23 @@ const HomeProfileTab = ({userId}: {userId: string | undefined}) => {
 
           <View style={styles.viewsContainer}>
             <ViewIcon width={13} height={13} />
-            <Text style={styles.viewsText}>{item.viewsCount || 0}</Text>
+            <Text style={styles.viewsText}>
+              {formatCount(item.viewsCount || 0).toLowerCase()}
+            </Text>
           </View>
+
+          {!isDisabled && !isActive && (
+            <View style={styles.staticCaption} pointerEvents="none">
+              <Text style={styles.staticTitle} numberOfLines={1}>
+                {item.title}
+              </Text>
+              {!!item.description && (
+                <Text style={styles.staticDescription} numberOfLines={2}>
+                  {item.description}
+                </Text>
+              )}
+            </View>
+          )}
 
           {!isDisabled && isActive && (
             <Animated.View
@@ -201,11 +232,11 @@ const HomeProfileTab = ({userId}: {userId: string | undefined}) => {
                 <TransparentInnerShadowButton
                   title="Watch"
                   onPress={() => handleWatchPress(item._id)}
-                  width={75}
-                  height={28}
+                  width={48}
+                  height={19}
                   style={{alignSelf: 'flex-start', borderColor: '#1AD655'}}
                   textStyle={styles.watchButtonText}
-                  shadowColor={'rgba(26, 214, 85, 0.2)'}
+                  shadowColor={'#1AD655'}
                 />
               </BlurView>
             </Animated.View>
@@ -215,57 +246,90 @@ const HomeProfileTab = ({userId}: {userId: string | undefined}) => {
     );
   };
 
-  // Extract data from API response
-  const latestVideos =
+  const apiLatest =
     (data as any)?.data?.content?.latestStreamsData?.data || [];
-  const popularVideos =
+  const apiPopular =
     (data as any)?.data?.content?.popularStreamsData?.data || [];
+  const latestVideos =
+    apiLatest.length > 0
+      ? apiLatest
+      : useDummyFallback
+        ? DUMMY_PROFILE_LATEST
+        : [];
+  const popularVideos =
+    apiPopular.length > 0
+      ? apiPopular
+      : useDummyFallback
+        ? DUMMY_PROFILE_POPULAR
+        : [];
+
+  const content = isLoading ? (
+    <Loading />
+  ) : latestVideos?.length > 0 || popularVideos?.length > 0 ? (
+    <>
+      {latestVideos?.length > 0 && (
+        <View style={styles.section}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              !embedded && styles.sectionTitlePadded,
+            ]}>
+            Latest
+          </Text>
+          <FlatList
+            data={latestVideos}
+            renderItem={({item}) =>
+              renderVideoItem({item, section: 'latest'})
+            }
+            horizontal
+            nestedScrollEnabled
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={[
+              styles.listContainer,
+              !embedded && styles.listContainerPadded,
+            ]}
+          />
+        </View>
+      )}
+
+      {popularVideos?.length > 0 && (
+        <View style={styles.section}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              !embedded && styles.sectionTitlePadded,
+            ]}>
+            Popular
+          </Text>
+          <FlatList
+            data={popularVideos}
+            renderItem={({item}) =>
+              renderVideoItem({item, section: 'popular'})
+            }
+            horizontal
+            nestedScrollEnabled
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={[
+              styles.listContainer,
+              !embedded && styles.listContainerPadded,
+            ]}
+          />
+        </View>
+      )}
+    </>
+  ) : (
+    <NodataFound compact={embedded} />
+  );
+
+  if (embedded) {
+    return <View style={styles.embeddedContent}>{content}</View>;
+  }
 
   return (
-    <ScrollView style={styles.container}>
-      {isLoading ? (
-        <Loading />
-      ) : (
-        <>
-          {latestVideos?.length > 0 || popularVideos?.length > 0 ? (
-            <>
-              {latestVideos?.length > 0 && (
-                <>
-                  <Text style={styles.sectionTitle}>Latest</Text>
-                  <FlatList
-                    data={latestVideos}
-                    renderItem={({item}) =>
-                      renderVideoItem({item, section: 'latest'})
-                    }
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.listContainer}
-                  />
-                </>
-              )}
-
-              {popularVideos?.length > 0 && (
-                <>
-                  <Text style={[styles.sectionTitle, {paddingTop: hp('2%')}]}>
-                    Popular
-                  </Text>
-                  <FlatList
-                    data={popularVideos}
-                    renderItem={({item}) =>
-                      renderVideoItem({item, section: 'popular'})
-                    }
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.listContainer}
-                  />
-                </>
-              )}
-            </>
-          ) : (
-            <NodataFound />
-          )}
-        </>
-      )}
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}>
+      {content}
     </ScrollView>
   );
 };
@@ -275,53 +339,60 @@ export default HomeProfileTab;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // backgroundColor: Colors.black,
-    // paddingHorizontal: 15,
-    // paddingTop: 10,
+  },
+  embeddedContent: {
+    gap: 24,
+    paddingBottom: 24,
+  },
+  section: {
+    gap: 8,
   },
   sectionTitle: {
-    fontSize: fontSize.f18,
+    fontSize: 20,
+    lineHeight: 42,
     fontFamily: fonts['Poppins-Regular'],
-    color: Colors.white,
-    marginBottom: 10,
+    color: '#FFFFFF',
+    letterSpacing: -1,
+    marginBottom: 0,
+  },
+  sectionTitlePadded: {
     paddingLeft: 15,
-
-    letterSpacing: -1, // Approximating the -5% letter spacing from design
   },
   listContainer: {
     paddingRight: 20,
     gap: 15,
+  },
+  listContainerPadded: {
     paddingLeft: 15,
   },
   videoCard: {
-    width: 134,
-    borderRadius: 8.7,
+    width: 134.49,
+    borderRadius: 8.68,
     overflow: 'hidden',
-    // borderWidth: 2,
-    // borderColor: '#1AD655',
   },
   videoImage: {
     width: '100%',
-    height: 188,
+    height: 187.63,
     resizeMode: 'cover',
   },
   viewsContainer: {
     position: 'absolute',
-    top: 10,
-    left: 10,
+    top: 6.5,
+    left: 6.5,
     backgroundColor: 'rgba(0, 0, 0, 0.25)',
     borderRadius: 3.25,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
+    paddingHorizontal: 4.34,
+    paddingVertical: 1.08,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 4.34,
   },
   viewsText: {
-    fontSize: fontSize.f8,
+    fontSize: 9.76,
     fontFamily: fonts['Poppins-SemiBold'],
-    color: Colors.white,
+    color: '#FFFFFF',
     letterSpacing: -0.2,
+    lineHeight: 13,
   },
   animatedContainer: {
     position: 'absolute',
@@ -331,32 +402,55 @@ const styles = StyleSheet.create({
   },
   videoInfoContainer: {
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    padding: 6.5,
-    paddingBottom: 8.7,
-    borderTopLeftRadius: 6.5,
-    borderTopRightRadius: 6.5,
+    paddingTop: 4.34,
+    paddingHorizontal: 6.51,
+    paddingBottom: 8.68,
+    borderTopLeftRadius: 6.51,
+    borderTopRightRadius: 6.51,
+    gap: 6.51,
   },
   videoTitle: {
-    fontSize: fontSize.f10,
+    fontSize: 14.1,
+    lineHeight: 16,
     fontFamily: fonts['Poppins-Medium'],
-    color: Colors.white,
-    marginBottom: 2,
+    color: '#FFFFFF',
+    marginBottom: 0,
   },
   videoDescription: {
-    fontSize: fontSize.f8,
+    fontSize: 11.93,
+    lineHeight: 18,
     fontFamily: fonts['Poppins-Regular'],
-    color: 'rgba(255, 255, 255, 0.77)',
-    marginBottom: 6.5,
+    color: '#787878',
+    marginBottom: 6.51,
+  },
+  staticCaption: {
+    position: 'absolute',
+    left: 10.85,
+    right: 8,
+    bottom: 8,
+  },
+  staticTitle: {
+    fontSize: 14.1,
+    lineHeight: 16,
+    fontFamily: fonts['Poppins-Medium'],
+    color: '#FFFFFF',
+  },
+  staticDescription: {
+    fontSize: 11.93,
+    lineHeight: 18,
+    fontFamily: fonts['Poppins-Regular'],
+    color: '#787878',
   },
   watchButtonText: {
-    fontSize: fontSize.f8,
+    fontSize: 8.68,
+    lineHeight: 8,
     fontFamily: fonts['Poppins-Medium'],
-    color: Colors.white,
-    letterSpacing: -0.3,
+    color: '#FFFFFF',
+    letterSpacing: -0.26,
   },
   videoCardContainer: {
-    padding: 2,
-    borderRadius: 8.7,
+    padding: 0,
+    borderRadius: 8.68,
   },
   disabledCard: {
     opacity: 0.6,
@@ -373,7 +467,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 8.7,
+    borderRadius: 8.68,
   },
   subscriberOnlyText: {
     color: Colors.white,

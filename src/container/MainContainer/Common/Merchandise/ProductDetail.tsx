@@ -3,86 +3,151 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  FlatList,
   TouchableOpacity,
-  Pressable,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {ProductDetailProps} from '@navigation/screens';
 import MerchandiseHeader from '@components/CustomHeaders/MerchandiseHeader';
-import AnimatedBackground from '@components/AnimationComponent/AnimationBackground';
+import GlowBackground from '@components/AnimationComponent/GlowBackground';
 import FastImage from 'react-native-fast-image';
-import {fontSize, height, hp, width, wp} from '@constant/fontSize';
+import {fontSize, width} from '@constant/fontSize';
 import {fonts} from '@constant/fontfamily';
 import {Colors} from '@constant/colors';
 import {ProductQuantityData} from '@utils/data';
-import CustomDropDown from '@components/DropDown/CustomDropDown';
-import Devider from '@components/Devider/Devider';
 import CustomButton from '@components/CustomButtons/CustomButton';
 import {useGetProductDetailQuery} from '@rtkServices/CreatorStoreService';
-import PostCarousel from '@components/CustomCarosal/PostCarousel';
 import Loader from '@components/CustomLoader/Loader';
-import useWishlist from '@hooks/useWishlist';
 import useCart from '@hooks/useCart';
 import useAddress from '@hooks/useAddress';
-import AddressDetail from '@components/ScreenLayouts/UserMerchandise/AddressDetail';
+import SelectDropdown from 'react-native-select-dropdown';
+import {ArrowDown, ArrowUP} from '@assets/svg/AuthFlowIcons';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {
+  DUMMY_DELIVERY_ADDRESS,
+  getDummyProductById,
+  isDummyProductId,
+} from '@utils/dummyMerchandise';
+
+const IMAGE_SIDE = 16;
+const IMAGE_PEEK = 23;
+const IMAGE_GAP = 4;
+const IMAGE_WIDTH = width - IMAGE_SIDE - IMAGE_PEEK;
+const IMAGE_HEIGHT = IMAGE_WIDTH * (431 / 354);
+const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
+const formatCategoryLabel = (category?: string) => {
+  if (!category) {
+    return '';
+  }
+  if (category === 'T-Shirts') {
+    return 'T-shirt';
+  }
+  return category;
+};
+
+const getDetailItems = (product?: any) => {
+  if (Array.isArray(product?.productDetails) && product.productDetails.length) {
+    return product.productDetails;
+  }
+  const text = product?.description?.trim?.() || '';
+  if (!text) {
+    return [];
+  }
+  const lines = text
+    .split(/\r?\n|•/)
+    .map((line: string) => line.replace(/^[-–]\s*/, '').trim())
+    .filter(Boolean);
+  return lines.length ? lines : [text];
+};
+
+const getUniqueSizes = (variants: any[] = []) => {
+  const seen = new Map<string, any>();
+  variants.forEach(variant => {
+    if (variant?.size && !seen.has(variant.size)) {
+      seen.set(variant.size, variant);
+    }
+  });
+  return [...seen.values()].sort((a, b) => {
+    const aIndex = SIZE_ORDER.indexOf(a.size);
+    const bIndex = SIZE_ORDER.indexOf(b.size);
+    return (aIndex === -1 ? 99 : aIndex) - (bIndex === -1 ? 99 : bIndex);
+  });
+};
+
+const formatAddressLine = (address?: any) =>
+  [
+    address?.streetNo,
+    address?.buildingName,
+    address?.city,
+    address?.areaDistrict,
+    address?.landmark,
+  ]
+    .filter(Boolean)
+    .join(', ');
 
 const ProductDetail = ({navigation, route}: ProductDetailProps) => {
   const {_id} = route?.params || {};
-  const {data: productDetail, isLoading} = useGetProductDetailQuery(_id);
-  const {handAddToWishlist, handRemoveFromWishlist} = useWishlist();
+  const {bottom} = useSafeAreaInsets();
+  const isDummyProduct = isDummyProductId(_id);
+  const dummyProduct = isDummyProduct ? getDummyProductById(_id) : undefined;
+  const {data: productDetail, isLoading} = useGetProductDetailQuery(_id, {
+    skip: isDummyProduct || !_id,
+  });
   const {handAddToCart} = useCart();
   const {selectedAddress} = useAddress();
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
-
-  const [isLiked, setIsLiked] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
-  const productData = productDetail?.data;
+  const productData = dummyProduct || productDetail?.data;
+  const sizeOptions = useMemo(
+    () => getUniqueSizes(productData?.variants),
+    [productData],
+  );
+  const media = productData?.media?.length
+    ? productData.media
+    : [];
+  const detailItems = useMemo(
+    () => getDetailItems(productData),
+    [productData],
+  );
+  const deliveryAddress = isDummyProduct
+    ? DUMMY_DELIVERY_ADDRESS
+    : selectedAddress;
+  const storeName =
+    productData?.storeName || productData?.store?.name || productData?.storeId?.name;
 
   const isOutOfStock = () => {
     if (productData?.hasVariants || productData?.variants?.length > 0) {
       return selectedVariant?.stock === 0;
-    } else {
-      return productData?.stock === 0;
     }
+    return productData?.stock === 0;
   };
-  const isVariantOutOfStock = (variant: any) => {
-    return variant?.stock === 0;
-  };
+
+  const isVariantOutOfStock = (variant: any) => variant?.stock === 0;
 
   useEffect(() => {
-    setIsLiked(productData?.isAddedToWishlist);
     if (productData?.variants?.length > 0) {
-      if (productData?.variants && productData?.variants?.length > 0) {
-        const lowestPriceVariant = productData.variants.reduce(
-          (minVariant: any, current: any) => {
-            return current.price < minVariant.price ? current : minVariant;
-          },
-          productData.variants[0],
-        );
-        setSelectedVariant(lowestPriceVariant);
-      } else {
-        setSelectedVariant(null);
-      }
-    }
-  }, [productDetail]);
-
-  const handleWishlist = async () => {
-    if (isLiked) {
-      await handRemoveFromWishlist({productId: _id});
-      setIsLiked(false);
+      const inStock = productData.variants.filter(
+        (variant: any) => variant?.stock > 0,
+      );
+      const medium = inStock.find((variant: any) => variant.size === 'M');
+      const lowestPrice = [...inStock].sort(
+        (a: any, b: any) => a.price - b.price,
+      )[0];
+      setSelectedVariant(medium || lowestPrice || productData.variants[0]);
     } else {
-      await handAddToWishlist({productId: _id});
-      setIsLiked(true);
+      setSelectedVariant(null);
     }
-  };
+  }, [productData]);
 
   const handleAddAddress = () => {
     navigation.navigate('GetAllAddress');
   };
 
   const handleAddToCart = () => {
+    if (isDummyProduct) {
+      return;
+    }
     const payload: AddToCartPayload = {
       productId: _id,
       storeId: productData?.storeId,
@@ -98,6 +163,9 @@ const ProductDetail = ({navigation, route}: ProductDetailProps) => {
   };
 
   const handleBuyNow = () => {
+    if (!productData) {
+      return;
+    }
     const cartItem = {
       productId: {
         _id: productData._id,
@@ -117,8 +185,8 @@ const ProductDetail = ({navigation, route}: ProductDetailProps) => {
         sku: selectedVariant?.sku || productData.sku || '',
         price: selectedVariant?.price || productData.price || 0,
       },
-      quantity: 1,
-      addedAt: new Date().toISOString(), // optional
+      quantity: Number(quantity) || 1,
+      addedAt: new Date().toISOString(),
     };
     navigation.navigate('CheckoutScreen', {
       cartData: [cartItem],
@@ -126,176 +194,238 @@ const ProductDetail = ({navigation, route}: ProductDetailProps) => {
     });
   };
 
+  const handleAboutStore = () => {
+    if (!productData?.storeId || isDummyProduct) {
+      return;
+    }
+    navigation.navigate('OtherUserStoreScreen', {
+      storeId: productData.storeId,
+      name: storeName || '',
+      profilePicture: productData.storeLogo || '',
+    });
+  };
+
+  const selectedQuantity =
+    ProductQuantityData.find(item => item.id === quantity) ||
+    ProductQuantityData[0];
+
   return (
     <View style={styles.container}>
-      <AnimatedBackground
-        animationSource={require('@assets/animations/AuthAnimation4.json')}
-        backgroundColor={'#1a1538'}
-      />
+      <GlowBackground />
       <View style={styles.contentOverlay}>
         <MerchandiseHeader
           onBackPress={() => navigation.goBack()}
           onCartPress={() => navigation.navigate('CartListScreen')}
         />
-        {isLoading ? (
+        {isLoading && !isDummyProduct ? (
           <Loader visible={isLoading} />
         ) : (
           <>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Product Image */}
-              {productData?.media && productDetail?.data?.media?.length > 0 && (
-                <View style={styles.imageContainer}>
-                  {productData?.media?.length === 1 ? (
-                    <FastImage
-                      source={{uri: productData?.media[0]}}
-                      style={styles.image}
-                    />
-                  ) : (
-                    <PostCarousel
-                      images={productData?.media}
-                      height={wp('100%')}
-                      autoPlay={true}
-                      borderRadius={12}
-                    />
-                  )}
-                </View>
-              )}
-
-              {/* Product Info */}
-              <View style={styles.productInfoContainer}>
-                <View style={styles.productInfo}>
-                  <Text style={styles.productPrice}>
-                    £{selectedVariant?.price || productData?.price}
-                  </Text>
-                  <Text style={styles.subText}>inclusive all taxes</Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.productImageContainer}
-                  onPress={handleWishlist}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContent}>
+              <ScrollView
+                horizontal
+                nestedScrollEnabled
+                showsHorizontalScrollIndicator={false}
+                snapToInterval={IMAGE_WIDTH + IMAGE_GAP}
+                decelerationRate="fast"
+                contentContainerStyle={styles.imageList}>
+                {(media.length ? media : [null]).map((item, index) => (
                   <FastImage
+                    key={`${item || 'placeholder'}-${index}`}
                     source={
-                      isLiked
-                        ? require('@assets/images/heartLiked.png')
-                        : require('@assets/images/heartUnliked.png')
+                      item
+                        ? {uri: item}
+                        : require('@assets/images/dummyImage.png')
                     }
-                    style={styles.heartIcon}
+                    style={[
+                      styles.image,
+                      index < (media.length || 1) - 1 && styles.imageSpacing,
+                    ]}
+                    resizeMode={FastImage.resizeMode.cover}
                   />
-                </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              <View style={styles.priceRow}>
+                <Text style={styles.productPrice}>
+                  £{selectedVariant?.price || productData?.price}
+                </Text>
+                <Text style={styles.subText}>inclusive all taxes</Text>
               </View>
 
-              {/* Product Name */}
-              <Text style={styles.productName}>{productData?.productName}</Text>
+              <Text style={styles.productName}>
+                {productData?.productName}
+                {productData?.category
+                  ? `\n${formatCategoryLabel(productData.category)}`
+                  : ''}
+              </Text>
 
-              {/* Product Detail */}
-              {productData?.variants?.length > 0 && (
-                <View style={styles.productDetail}>
+              <View style={styles.productDetail}>
+                {sizeOptions.length > 0 && (
                   <View style={styles.sizeContainer}>
-                    <Text style={styles.sectionTitle}>Select Size</Text>
-                    <FlatList
-                      style={styles.sizeList}
-                      data={productData?.variants}
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      showsVerticalScrollIndicator={false}
-                      renderItem={({item}) => (
-                        <TouchableOpacity
-                          onPress={() => setSelectedVariant(item)}
-                          disabled={isVariantOutOfStock(item)}
-                          style={[
-                            styles.sizeItem,
-                            {
-                              backgroundColor:
-                                selectedVariant?.size === item?.size
-                                  ? Colors.white
-                                  : '#FFFFFF1A',
-                              opacity: isVariantOutOfStock(item) ? 0.5 : 1,
-                            },
-                          ]}>
-                          <Text
+                    <Text style={styles.sectionTitle}>Select size</Text>
+                    <View style={styles.sizeList}>
+                      {sizeOptions.map(item => {
+                        const selected = selectedVariant?.size === item.size;
+                        const disabled = isVariantOutOfStock(item);
+                        return (
+                          <TouchableOpacity
+                            key={item.size}
+                            onPress={() => setSelectedVariant(item)}
+                            disabled={disabled}
                             style={[
-                              styles.sizeItemText,
-                              {
-                                color:
-                                  selectedVariant?.size === item?.size
-                                    ? Colors.black
-                                    : Colors.white,
-                              },
+                              styles.sizeItem,
+                              selected && styles.sizeItemSelected,
+                              disabled && styles.sizeItemDisabled,
                             ]}>
-                            {item.size}
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                    />
+                            <Text
+                              style={[
+                                styles.sizeItemText,
+                                selected && styles.sizeItemTextSelected,
+                                disabled && styles.sizeItemTextDisabled,
+                              ]}>
+                              {item.size}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
                   </View>
-                  <View style={styles.quantityContainer}>
-                    <Text style={styles.sectionTitle}>Quantity</Text>
-                    <CustomDropDown
-                      defaultValue={quantity}
-                      data={ProductQuantityData}
-                      placeHolder="Qty"
-                      onSelect={value => {
-                        setQuantity(value?.id);
-                      }}
-                    />
-                  </View>
+                )}
+                <View style={styles.quantityContainer}>
+                  <Text style={[styles.sectionTitle, styles.quantityLabel]}>
+                    Quantity
+                  </Text>
+                  <SelectDropdown
+                    data={ProductQuantityData}
+                    defaultValue={selectedQuantity}
+                    onSelect={value => setQuantity(value?.id)}
+                    renderButton={(selectedItem, isOpened) => (
+                      <View style={styles.qtyButton}>
+                        <Text style={styles.qtyText}>
+                          {selectedItem?.name || quantity}
+                        </Text>
+                        {isOpened ? (
+                          <ArrowUP color="#87809F" width={12} height={12} />
+                        ) : (
+                          <ArrowDown color="#87809F" width={12} height={12} />
+                        )}
+                      </View>
+                    )}
+                    renderItem={(item, _index, isSelected) => (
+                      <View
+                        style={[
+                          styles.qtyMenuItem,
+                          isSelected && styles.qtyMenuItemSelected,
+                        ]}>
+                        <Text
+                          style={[
+                            styles.qtyText,
+                            isSelected && styles.sizeItemTextSelected,
+                          ]}>
+                          {item.name}
+                        </Text>
+                      </View>
+                    )}
+                    dropdownStyle={styles.qtyMenu}
+                    showsVerticalScrollIndicator={false}
+                  />
                 </View>
-              )}
+              </View>
 
-              {/* Product Address */}
-              {selectedAddress ? (
-                <AddressDetail
-                  selectedAddress={selectedAddress}
-                  addressOnPress={handleAddAddress}
-                  editAddressOnPress={() =>
-                    navigation.navigate('AddAddressScreen', {
-                      addressId: selectedAddress?._id,
-                    })
-                  }
-                  isEditable={false}
-                />
-              ) : (
-                <TouchableOpacity
-                  onPress={handleAddAddress}
-                  style={styles.addressContainer}>
-                  <Text style={styles.addressText}>Delivery Address</Text>
-                  <TouchableOpacity
-                    onPress={handleAddAddress}
-                    style={styles.addAddressContainer}>
-                    <Text style={styles.addAddressText}>Add</Text>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={handleAddAddress}
+                style={styles.addressCard}>
+                <View style={styles.addressHeader}>
+                  <Text style={styles.addressLabel}>Delivery Address</Text>
+                  <TouchableOpacity onPress={handleAddAddress} hitSlop={12}>
                     <FastImage
                       source={require('@assets/images/editAddressIcon.png')}
                       style={styles.addressIcon}
                     />
                   </TouchableOpacity>
-                </TouchableOpacity>
+                </View>
+                {deliveryAddress ? (
+                  <>
+                    <View style={styles.addressNameRow}>
+                      <Text style={styles.addressName}>
+                        {deliveryAddress.fullName}
+                      </Text>
+                      {!!(
+                        deliveryAddress.countryCode ||
+                        deliveryAddress.mobileNumber
+                      ) && (
+                        <>
+                          <View style={styles.addressDivider} />
+                          <Text style={styles.addressPhone}>
+                            {deliveryAddress.countryCode}{' '}
+                            {deliveryAddress.mobileNumber}
+                          </Text>
+                        </>
+                      )}
+                    </View>
+                    <Text style={styles.addressLine}>
+                      {formatAddressLine(deliveryAddress)}
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={styles.addressLine}>Add a delivery address</Text>
+                )}
+              </TouchableOpacity>
+
+              {detailItems.length > 0 && (
+                <>
+                  <View style={styles.sectionDivider} />
+                  <View style={styles.sectionBlock}>
+                    <Text style={styles.sectionHeading}>Product Details</Text>
+                    {detailItems.length > 1 ? (
+                      detailItems.map(item => (
+                        <View key={item} style={styles.bulletRow}>
+                          <Text style={styles.bullet}>•</Text>
+                          <Text style={styles.bulletText}>{item}</Text>
+                        </View>
+                      ))
+                    ) : (
+                      <Text style={styles.bodyText}>{detailItems[0]}</Text>
+                    )}
+                  </View>
+                </>
               )}
 
-              <Devider />
-              <View style={{marginTop: 10, marginBottom: 10}}>
-                <Text style={styles.productDescription}>Product Detail</Text>
-                <Text style={styles.productDescriptionText}>
-                  {productDetail?.data?.description}
-                </Text>
-              </View>
-              {productDetail?.data?.returnPolicy && (
+              {(productData?.returnPolicy || isDummyProduct) && (
                 <>
-                  <Devider />
-                  <View style={{marginTop: 10, marginBottom: 10}}>
-                    <Text style={styles.returnPolicy}>Return Policy</Text>
-                    <Text style={styles.returnPolicyText}>
-                      {productDetail?.data?.returnPolicy}
+                  <View style={styles.sectionDivider} />
+                  <View style={styles.sectionBlock}>
+                    <Text style={styles.sectionHeading}>Return policy</Text>
+                    <Text style={styles.bodyText}>
+                      {productData?.returnPolicy ||
+                        'Easy 14 days returns. Return policies may vary based on product.'}
                     </Text>
                   </View>
                 </>
               )}
+
+              <View style={styles.assuranceBlock}>
+                <Text style={styles.assuranceText}>
+                  Assured quality | Easy Returns
+                </Text>
+                {!!storeName && (
+                  <TouchableOpacity onPress={handleAboutStore}>
+                    <Text style={styles.aboutStore}>About {storeName}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </ScrollView>
-            {/* Out of Stock Message */}
+
             {isOutOfStock() && (
               <View style={styles.outOfStockContainer}>
                 <Text style={styles.outOfStockText}>Out of Stock</Text>
               </View>
             )}
-            <View style={styles.bottomContainer}>
+            <View style={[styles.bottomContainer, {paddingBottom: Math.max(bottom, 10)}]}>
               <CustomButton
                 text="Add to Cart"
                 onPress={handleAddToCart}
@@ -336,174 +466,247 @@ const styles = StyleSheet.create({
     position: 'relative',
     flex: 1,
   },
-  productInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-    columnGap: 7,
+  scrollContent: {
+    paddingBottom: 24,
   },
-  productName: {
-    fontSize: fontSize.f20,
-    fontFamily: fonts['Poppins-Medium'],
-    color: Colors.white,
-    paddingHorizontal: 15,
+  imageList: {
+    paddingLeft: IMAGE_SIDE,
+    paddingRight: 8,
+  },
+  imageSpacing: {
+    marginRight: IMAGE_GAP,
+  },
+  image: {
+    width: IMAGE_WIDTH,
+    height: IMAGE_HEIGHT,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    columnGap: 8,
+    paddingHorizontal: 16,
+    marginTop: 18,
   },
   productPrice: {
     fontSize: fontSize.f30,
     fontFamily: fonts['Poppins-SemiBold'],
     color: Colors.white,
+    includeFontPadding: false,
   },
   subText: {
-    fontSize: fontSize.f14,
+    fontSize: fontSize.f12,
     fontFamily: fonts['Poppins-Regular'],
-    color: Colors.grey,
-    marginTop: 10,
+    color: 'rgba(255,255,255,0.5)',
+    marginBottom: 6,
+  },
+  productName: {
+    fontSize: fontSize.f20,
+    fontFamily: fonts['Poppins-Medium'],
+    color: Colors.white,
+    paddingHorizontal: 16,
+    lineHeight: 28,
   },
   productDetail: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginTop: 20,
-    paddingHorizontal: 15,
+    marginTop: 22,
+    paddingHorizontal: 16,
   },
   sizeContainer: {
     flex: 1,
-    marginRight: 15,
+    marginRight: 12,
   },
   quantityContainer: {
-    width: width * 0.2,
+    alignItems: 'flex-end',
+  },
+  quantityLabel: {
+    textAlign: 'right',
+    width: '100%',
   },
   sectionTitle: {
-    fontSize: fontSize.f14,
-    fontFamily: fonts['Poppins-Regular'],
+    fontSize: fontSize.f12,
+    fontFamily: fonts['Poppins-Medium'],
     color: Colors.white,
     marginBottom: 10,
   },
   sizeList: {
-    marginTop: 5,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
   },
   sizeItem: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
+    width: 36,
+    height: 36,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: Colors.grey,
-    marginRight: 10,
+    borderColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  sizeItemSelected: {
+    backgroundColor: Colors.white,
+    borderColor: Colors.white,
+  },
+  sizeItemDisabled: {
+    backgroundColor: 'transparent',
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   sizeItemText: {
-    fontSize: fontSize.f14,
-    fontFamily: fonts['Poppins-Regular'],
-    color: Colors.white,
+    fontSize: fontSize.f12,
+    fontFamily: fonts['Poppins-Medium'],
+    color: '#B0AFB6',
+    includeFontPadding: false,
   },
-  productInfoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 15,
+  sizeItemTextSelected: {
+    color: Colors.black,
   },
-  productImageContainer: {
-    backgroundColor: Colors.white,
-    borderRadius: 40,
-    minHeight: 25,
-    minWidth: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
+  sizeItemTextDisabled: {
+    color: 'rgba(255,255,255,0.2)',
   },
-  heartIcon: {
-    width: 15,
-    height: 15,
-  },
-  addressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    columnGap: 10,
-    marginTop: 30,
-    backgroundColor: '#FFFFFF1A',
+  qtyButton: {
+    width: 54,
+    height: 36,
     borderRadius: 10,
-    padding: 10,
-    minHeight: 55,
-    justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    width: '94%',
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  addAddressContainer: {
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
     flexDirection: 'row',
     alignItems: 'center',
-    columnGap: 5,
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    columnGap: 4,
+  },
+  qtyText: {
+    fontSize: fontSize.f12,
+    fontFamily: fonts['Poppins-Medium'],
+    color: Colors.white,
+    includeFontPadding: false,
+  },
+  qtyMenu: {
+    backgroundColor: 'rgba(24, 20, 38, 0.96)',
+    borderRadius: 10,
+    minWidth: 54,
+  },
+  qtyMenuItem: {
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qtyMenuItemSelected: {
+    backgroundColor: Colors.white,
+  },
+  addressCard: {
+    marginTop: 28,
+    marginHorizontal: 12,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    minHeight: 126,
+  },
+  addressHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  addressLabel: {
+    fontSize: fontSize.f12,
+    fontFamily: fonts['Poppins-Regular'],
+    color: 'rgba(255,255,255,0.5)',
   },
   addressIcon: {
     width: 20,
     height: 20,
   },
-  addressText: {
-    fontSize: fontSize.f14,
-    fontFamily: fonts['Poppins-Regular'],
-    color: Colors.white,
-  },
-  addAddressText: {
-    fontSize: fontSize.f16,
-    fontFamily: fonts['Poppins-Medium'],
-    color: Colors.white,
-  },
-  bottomContainer: {
-    paddingHorizontal: 10,
-    minHeight: 60,
-    backgroundColor: '#120C20BF',
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
+  addressNameRow: {
     flexDirection: 'row',
-    columnGap: 10,
-    justifyContent: 'space-between',
     alignItems: 'center',
+    flexWrap: 'wrap',
   },
-  addCartBtn: {
-    width: '35%',
-  },
-  buyNowBtn: {
-    backgroundColor: Colors.white,
-    width: '60%',
-  },
-  imageContainer: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 10,
-    alignSelf: 'center',
-  },
-  image: {
-    width: width - 30,
-    height: height * 0.5,
-    borderRadius: 10,
-    alignSelf: 'center',
-  },
-  returnPolicy: {
-    fontSize: fontSize.f14,
-    fontFamily: fonts['Poppins-Medium'],
-    color: Colors.grey,
-    paddingHorizontal: 15,
-  },
-  returnPolicyText: {
+  addressName: {
     fontSize: fontSize.f14,
     fontFamily: fonts['Poppins-Medium'],
     color: '#CAC9CE',
-    paddingHorizontal: 15,
-    marginTop: 10,
   },
-  productDescriptionText: {
+  addressDivider: {
+    width: 1,
+    height: 16,
+    backgroundColor: '#CAC9CE',
+    marginHorizontal: 8,
+  },
+  addressPhone: {
     fontSize: fontSize.f14,
     fontFamily: fonts['Poppins-Medium'],
     color: '#CAC9CE',
-    paddingHorizontal: 15,
   },
-  productDescription: {
+  addressLine: {
     fontSize: fontSize.f14,
+    fontFamily: fonts['Poppins-Medium'],
+    color: '#CAC9CE',
+    marginTop: 8,
+    lineHeight: 20,
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    marginTop: 20,
+  },
+  sectionBlock: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  sectionHeading: {
+    fontSize: fontSize.f12,
     fontFamily: fonts['Poppins-Regular'],
-    color: Colors.grey,
-    paddingHorizontal: 15,
-    marginBottom: 10,
+    color: 'rgba(255,255,255,0.5)',
+    marginBottom: 12,
+  },
+  bulletRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 6,
+  },
+  bullet: {
+    width: 14,
+    fontSize: fontSize.f14,
+    fontFamily: fonts['Poppins-Medium'],
+    color: '#CAC9CE',
+    lineHeight: 20,
+  },
+  bulletText: {
+    flex: 1,
+    fontSize: fontSize.f14,
+    fontFamily: fonts['Poppins-Medium'],
+    color: '#CAC9CE',
+    lineHeight: 20,
+  },
+  bodyText: {
+    fontSize: fontSize.f14,
+    fontFamily: fonts['Poppins-Medium'],
+    color: '#CAC9CE',
+    lineHeight: 20,
+  },
+  assuranceBlock: {
+    alignItems: 'center',
+    paddingTop: 28,
+    paddingBottom: 8,
+    paddingHorizontal: 16,
+  },
+  assuranceText: {
+    fontSize: fontSize.f12,
+    fontFamily: fonts['Poppins-Medium'],
+    color: '#CAC9CE',
+    marginBottom: 8,
+  },
+  aboutStore: {
+    fontSize: fontSize.f14,
+    fontFamily: fonts['Poppins-Medium'],
+    color: '#CAC9CE',
+    textDecorationLine: 'underline',
   },
   outOfStockContainer: {
     backgroundColor: '#FF4444',
@@ -518,6 +721,31 @@ const styles = StyleSheet.create({
     fontSize: fontSize.f16,
     fontFamily: fonts['Poppins-Medium'],
     color: Colors.white,
+  },
+  bottomContainer: {
+    paddingHorizontal: 10,
+    paddingTop: 10,
+    minHeight: 60,
+    backgroundColor: '#120C20BF',
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    flexDirection: 'row',
+    columnGap: 10,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  addCartBtn: {
+    width: '35%',
+    marginTop: 0,
+    marginBottom: 0,
+    height: 48,
+  },
+  buyNowBtn: {
+    backgroundColor: Colors.white,
+    width: '60%',
+    marginTop: 0,
+    marginBottom: 0,
+    height: 48,
   },
   disabledButton: {
     opacity: 0.5,

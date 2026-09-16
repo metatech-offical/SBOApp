@@ -13,20 +13,24 @@ const ItemCategoryItem = ({
   onPress: (id: string) => void;
   isSelected: boolean;
 }) => {
+  const isAllItems = item?.name === 'All Items' || item?.name === 'All';
+
   return (
     <Pressable
       style={[
         styles.container,
-        {backgroundColor: isSelected ? Colors.white : '#FFFFFF1A'},
+        isSelected ? styles.selected : styles.unselected,
       ]}
       onPress={() => onPress(item.id)}>
-      <Image
-        source={require('@assets/images/CategoryIcon.png')}
-        style={[
-          styles.image,
-          {tintColor: isSelected ? Colors.black : Colors.white},
-        ]}
-      />
+      {!isAllItems ? (
+        <Image
+          source={require('@assets/images/CategoryIcon.png')}
+          style={[
+            styles.image,
+            {tintColor: isSelected ? Colors.black : Colors.white},
+          ]}
+        />
+      ) : null}
       <Text
         style={[
           styles.text,
@@ -42,25 +46,28 @@ export default ItemCategoryItem;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    borderRadius: 10,
-    marginBottom: 20,
-    backgroundColor:Colors.white,
+    height: 35,
+    paddingHorizontal: 14,
+    borderRadius: 8,
     marginRight: 10,
-    minHeight: 33,
-    minWidth: 110,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
-    columnGap: 5,
+    columnGap: 6,
+  },
+  selected: {
+    backgroundColor: Colors.white,
+  },
+  unselected: {
+    backgroundColor: 'rgba(0,0,0,0.35)',
   },
   text: {
-    fontSize: fontSize.f14,
+    fontSize: fontSize.f12,
     fontFamily: fonts['Poppins-Medium'],
-    color: Colors.black,
+    includeFontPadding: false,
   },
   image: {
-    width: 20,
-    height: 20,
+    width: 16,
+    height: 16,
   },
 });

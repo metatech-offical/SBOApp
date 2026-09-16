@@ -20,6 +20,7 @@ import {useGetOrSearchPlaylistQuery} from '@rtkServices/PlayListService';
 import {RootState, useAppSelector} from '@store/index';
 import {ArrowDown} from '@assets/svg/AuthFlowIcons';
 import {PlusIcon} from '@assets/svg/CommonIcons';
+import {SearchIcon, ChevronDownSmallIcon} from '@assets/svg/HomeScreenIcon';
 import CustomButton from '@components/CustomButtons/CustomButton';
 import NodataFound from '@components/DataEmpty/NodataFound';
 import SearchInputPlaylist from '@components/CustomInputs/SearchInputPlaylist';
@@ -29,8 +30,17 @@ import {useReportContentMutation} from '@rtkServices/ContentActionService';
 import {useToastMessage} from '@hooks/useToastMessage';
 import {Colors} from '@constant/colors';
 import {fontSize, height} from '@constant/fontSize';
+import {DUMMY_PROFILE_PLAYLISTS} from '@utils/dummyVideos';
 
-const PlaylistProfileTab = ({userId}: {userId?: string}) => {
+const PlaylistProfileTab = ({
+  userId,
+  embedded,
+  useDummyFallback,
+}: {
+  userId?: string;
+  embedded?: boolean;
+  useDummyFallback?: boolean;
+}) => {
   const {showError, showSuccess} = useToastMessage();
   const navigation = useNavigation();
   const [isModalVisible, setModalVisible] = useState(false);
@@ -41,6 +51,8 @@ const PlaylistProfileTab = ({userId}: {userId?: string}) => {
   const [reportedVideo, setReportedVideo] = useState(null);
   const sheetRef = useRef(null);
   const [selectedFilter, setSelectedFilter] = useState<any>('');
+  const [sortBy, setSortBy] = useState<'latest' | 'popular'>('latest');
+  const [sortOpen, setSortOpen] = useState(false);
   const {user} = useAppSelector((state: RootState) => state.user);
   const [reportUser] = useReportContentMutation();
 
@@ -86,7 +98,28 @@ const PlaylistProfileTab = ({userId}: {userId?: string}) => {
     }, [refetchPlaylists, userId]),
   );
 
-  const playlists = playlistData?.data?.playlists || [];
+  const apiPlaylists = playlistData?.data?.playlists || [];
+  const playlists = useMemo(() => {
+    const source =
+      apiPlaylists.length > 0
+        ? apiPlaylists
+        : useDummyFallback
+          ? DUMMY_PROFILE_PLAYLISTS
+          : [];
+    const query = searchedText.trim().toLowerCase();
+    const filtered = source.filter((item: any) =>
+      query ? `${item?.title || ''}`.toLowerCase().includes(query) : true,
+    );
+    return [...filtered].sort((a: any, b: any) => {
+      if (sortBy === 'popular') {
+        return (b?.videosCount || 0) - (a?.videosCount || 0);
+      }
+      return (
+        new Date(b?.createdAt || 0).getTime() -
+        new Date(a?.createdAt || 0).getTime()
+      );
+    });
+  }, [apiPlaylists, searchedText, sortBy, useDummyFallback]);
 
   useEffect(() => {
     setPageNumber(1);
@@ -186,54 +219,124 @@ const PlaylistProfileTab = ({userId}: {userId?: string}) => {
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.sercheader}>
-        <SearchInputPlaylist
-          value={searchedText}
-          onChange={text => setSearchedText(text)}
-          onIconPress={() => setSearchedText('')}
-          onsubmitEditing={text => setSearchedText(text)}
-          style={styles.searchcontainer}
-          placeholder="Search for playlists"
-          containerStyle={styles.search}
-        />
-        <TouchableOpacity style={styles.timeContainer}>
-          <Text style={styles.durationContainer}>Latest </Text>
-          <ArrowDown color={'#ffffff'} height={20} width={20} />
-        </TouchableOpacity>
+    <View style={[styles.container, embedded && styles.embedded]}>
+      {embedded ? (
+        <View style={styles.toolbarWrap}>
+          <View style={styles.toolbar}>
+            <View style={styles.profileSearch}>
+              <SearchIcon width={14} height={14} stroke="#FFFFFF" />
+              <TextInput
+                value={searchedText}
+                onChangeText={setSearchedText}
+                placeholder="Search"
+                placeholderTextColor="rgba(255, 255, 255, 0.46)"
+                style={styles.profileSearchInput}
+                allowFontScaling={false}
+              />
+            </View>
+            <Pressable
+              style={styles.sortButton}
+              onPress={() => setSortOpen(open => !open)}>
+              <Text style={styles.sortLabel}>Sort by</Text>
+              <View style={sortOpen ? styles.chevronUp : undefined}>
+                <ChevronDownSmallIcon width={7} height={3} stroke="#FFFFFF" />
+              </View>
+            </Pressable>
+            {userId === user?._id && (
+              <Pressable
+                style={styles.createButton}
+                onPress={openCreatePlaylistModal}>
+                <PlusIcon fill="#111111" height={12} width={12} />
+              </Pressable>
+            )}
+          </View>
+          {sortOpen && (
+            <View style={styles.sortMenu}>
+              <Pressable
+                style={styles.sortOption}
+                onPress={() => {
+                  setSortBy('latest');
+                  setSortOpen(false);
+                }}>
+                <Text
+                  style={[
+                    styles.sortOptionText,
+                    sortBy === 'latest' && styles.sortOptionActive,
+                  ]}>
+                  Latest
+                </Text>
+              </Pressable>
+              <Pressable
+                style={styles.sortOption}
+                onPress={() => {
+                  setSortBy('popular');
+                  setSortOpen(false);
+                }}>
+                <Text
+                  style={[
+                    styles.sortOptionText,
+                    sortBy === 'popular' && styles.sortOptionActive,
+                  ]}>
+                  Popular
+                </Text>
+              </Pressable>
+            </View>
+          )}
+        </View>
+      ) : (
+        <View style={styles.sercheader}>
+          <SearchInputPlaylist
+            value={searchedText}
+            onChange={text => setSearchedText(text)}
+            onIconPress={() => setSearchedText('')}
+            onsubmitEditing={text => setSearchedText(text)}
+            style={styles.searchcontainer}
+            placeholder="Search for playlists"
+            containerStyle={styles.search}
+          />
+          <TouchableOpacity style={styles.timeContainer}>
+            <Text style={styles.durationContainer}>Latest </Text>
+            <ArrowDown color={'#ffffff'} height={20} width={20} />
+          </TouchableOpacity>
 
-        {userId === user?._id && (
-          <Pressable
-            style={{
-              height: 24,
-              width: 24,
-              justifyContent: 'center',
-              alignItems: 'center',
-              backgroundColor: '#ffffff',
-              borderRadius: 15,
-              marginLeft: 10,
-            }}
-            onPress={openCreatePlaylistModal}>
-            <PlusIcon
-              fill={Colors.black}
-              stroke={Colors.black}
-              height={12}
-              width={12}
-            />
-          </Pressable>
-        )}
-      </View>
+          {userId === user?._id && (
+            <Pressable
+              style={{
+                height: 24,
+                width: 24,
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: '#ffffff',
+                borderRadius: 15,
+                marginLeft: 10,
+              }}
+              onPress={openCreatePlaylistModal}>
+              <PlusIcon
+                fill={Colors.black}
+                stroke={Colors.black}
+                height={12}
+                width={12}
+              />
+            </Pressable>
+          )}
+        </View>
+      )}
       <FlatList
         nestedScrollEnabled={true}
+        scrollEnabled={!embedded}
         data={playlists}
         renderItem={({item}) => (
           <PlayListScreen
             playlist={item}
             onUpdateSuccess={refetchPlaylists}
-            // refetch={refetch}
             onReportVideo={handleVideoReport}
+            embedded={embedded}
           />
         )}
+        ItemSeparatorComponent={
+          embedded ? () => <View style={styles.separator} /> : undefined
+        }
+        contentContainerStyle={embedded ? styles.profileList : undefined}
         showsVerticalScrollIndicator={false}
         onEndReached={loadMoreResults}
         onEndReachedThreshold={0.5}
@@ -258,7 +361,7 @@ const PlaylistProfileTab = ({userId}: {userId?: string}) => {
               />
             </View>
           ) : (
-            <NodataFound />
+            <NodataFound compact={embedded} />
           )
         }
       />
@@ -321,6 +424,94 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
+  },
+  embedded: {
+    flex: 0,
+  },
+  toolbarWrap: {
+    zIndex: 4,
+    marginBottom: 16,
+  },
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    height: 41,
+  },
+  profileSearch: {
+    flex: 1,
+    height: 41,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 14,
+    paddingRight: 12,
+    paddingVertical: 12,
+    gap: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 8,
+  },
+  profileSearchInput: {
+    flex: 1,
+    padding: 0,
+    fontSize: 13,
+    lineHeight: 17,
+    fontFamily: fonts['Poppins-Regular'],
+    color: '#FFFFFF',
+  },
+  sortButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    height: 17,
+  },
+  sortLabel: {
+    fontSize: 12,
+    lineHeight: 17,
+    fontFamily: fonts['Poppins-Medium'],
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  chevronUp: {
+    transform: [{rotate: '180deg'}],
+  },
+  sortMenu: {
+    position: 'absolute',
+    top: 45,
+    right: 40,
+    minWidth: 110,
+    backgroundColor: 'rgba(20, 20, 20, 0.96)',
+    borderRadius: 8,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  sortOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  sortOptionText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontFamily: fonts['Poppins-Regular'],
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  sortOptionActive: {
+    color: '#FFFFFF',
+    fontFamily: fonts['Poppins-Medium'],
+  },
+  createButton: {
+    height: 24,
+    width: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+  },
+  profileList: {
+    paddingBottom: 26,
+  },
+  separator: {
+    height: 12,
   },
   searchcontainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',

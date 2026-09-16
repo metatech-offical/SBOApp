@@ -8,6 +8,7 @@ import {useGetComingSoonEventsQuery} from '@rtkServices/CreatorTicketingService'
 import {useNavigation} from '@react-navigation/native';
 import {RootState, useAppSelector} from '@store/index';
 import SearchInput from '@components/CustomInputs/SearchInput';
+import {DUMMY_UPCOMING_EVENTS, filterDummyEvents} from '@utils/dummyTicketing';
 
 interface ComingSoonEventProps {
   searchQuery: string;
@@ -23,6 +24,9 @@ const ComingSoonEvent = ({searchQuery, onSearchChange}: ComingSoonEventProps) =>
     creatorId: user?._id || '',
     search: searchQuery || undefined,
   });
+  const events = comingSoonEvents?.data?.events?.length
+    ? comingSoonEvents.data.events
+    : filterDummyEvents(DUMMY_UPCOMING_EVENTS, {search: searchQuery});
   return (
     <View style={styles.container}>
       <AnimationBackground
@@ -43,7 +47,7 @@ const ComingSoonEvent = ({searchQuery, onSearchChange}: ComingSoonEventProps) =>
             />
           }
           stickyHeaderIndices={[0]}
-          data={comingSoonEvents?.data?.events || []}
+          data={events}
           ListEmptyComponent={<NodataFound />}
           showsVerticalScrollIndicator={false}
           renderItem={({item}) => (

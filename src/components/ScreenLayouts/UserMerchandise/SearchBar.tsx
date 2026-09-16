@@ -1,8 +1,5 @@
 import {View, TouchableOpacity, StyleSheet} from 'react-native';
 import React, {memo} from 'react';
-import {Controller, useForm} from 'react-hook-form';
-import TextInputWithLabels from '@components/CustomInputs/TextInputWithLabels';
-import {SearchIcon} from '@assets/svg/HomeScreenIcon';
 import FastImage from 'react-native-fast-image';
 import SearchInput from '@components/CustomInputs/SearchInput';
 
@@ -23,49 +20,27 @@ const SearchBar = ({
 }) => {
   return (
     <View style={styles.container}>
-      {/* <TextInputWithLabels
-        placeholder="Search for merch..."
-        onChangeText={onChangeText}
-        value={value || ''}
-        icon={<SearchIcon width={20} height={20} />}
-        mainContainerProps={{
-          flex: 1,
-        }}
-      /> */}
-
       <SearchInput
         placeholder={placeholder || 'Search for merch...'}
+        placeholderTextColor="rgba(255,255,255,0.5)"
         onChangeText={onChangeText}
         value={value || ''}
-        containerStyle={{
-          flex: 1,
-          height: 55,
-          marginTop: 0,
-          borderRadius: 10,
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          borderWidth: 1,
-          borderColor: 'rgba(164, 163, 163, 0.33)',
-          shadowOpacity: 0.2,
-          shadowOffset: {width: 0, height: 1.5},
-        }}
-        // icon={<SearchIcon width={20} height={20} />}
+        containerStyle={styles.searchInput}
       />
 
       {showFilterIcon && (
-        <View style={{width: '16%', marginLeft: 10}}>
-          <TouchableOpacity
-            style={[styles.filterIconView]}
-            onPress={onFilterPress}>
-            {icon ? (
-              icon
-            ) : (
-              <FastImage
-                source={require('@assets/images/FilterIcon.png')}
-                style={{width: 20, height: 20}}
-              />
-            )}
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.filterIconView}
+          onPress={onFilterPress}>
+          {icon ? (
+            icon
+          ) : (
+            <FastImage
+              source={require('@assets/images/FilterIcon.png')}
+              style={styles.filterIcon}
+            />
+          )}
+        </TouchableOpacity>
       )}
     </View>
   );
@@ -75,25 +50,36 @@ export default memo(SearchBar);
 
 const styles = StyleSheet.create({
   container: {
-    // width: '9%',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 10,
-    marginBottom: 20,
-    alignSelf: 'center',
+    paddingHorizontal: 16,
+    marginTop: 4,
+    marginBottom: 16,
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    height: 54,
+    marginTop: 0,
+    marginHorizontal: 0,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    paddingLeft: 16,
   },
   filterIconView: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderWidth: 1,
-    borderRadius: 10,
-    borderColor: 'rgba(164, 163, 163, 0.33)',
-    shadowOpacity: 0.2,
-    shadowOffset: {width: 0, height: 1.5},
-    flexDirection: 'row',
+    borderRadius: 8,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     alignItems: 'center',
-    height: 55,
+    height: 54,
     justifyContent: 'center',
-    width: 55,
+    width: 54,
+  },
+  filterIcon: {
+    width: 20,
+    height: 20,
   },
 });

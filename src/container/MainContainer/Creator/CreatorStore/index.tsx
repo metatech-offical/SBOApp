@@ -19,7 +19,7 @@ import ComingSoon from './CreatorTabNavigator/ComingSoon';
 import Livecollections from './CreatorTabNavigator/Livecollections';
 import {useGetStoreAnalyticsQuery} from '@rtkServices/CreatorStoreService';
 import Loader from '@components/CustomLoader/Loader';
-import AnimationBackground from '@components/AnimationComponent/AnimationBackground';
+import GlowBackground from '@components/AnimationComponent/GlowBackground';
 import {screenHeight} from '@utils/general';
 import {Colors} from '@constant/colors';
 import {fontSize} from '@constant/fontSize';
@@ -52,14 +52,10 @@ const CreatorStore = ({navigation}: CreatorStoreProps) => {
 
   return (
     <View style={styles.container}>
-      <AnimationBackground
-        animationSource={require('@assets/animations/AuthAnimation4.json')}
-        backgroundColor="#1a1538"
-        zIndex={0}
-      />
+      <GlowBackground />
       <View style={styles.mainContainer}>
         <StackHeader
-          title={'Your Store'}
+          title={'Your Merchandise'}
           onBackPress={() => navigation.goBack()}
           rightIcon={true}
           onRightPress={() => {
@@ -180,6 +176,7 @@ export default CreatorStore;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    overflow: 'hidden',
   },
   mainContainer: {
     paddingHorizontal: 10,

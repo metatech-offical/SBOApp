@@ -16,21 +16,18 @@ import {fontSize} from '@constant/fontSize';
 
 const CreatorVideos = ({navigation}: CreatorVideosProps) => {
   const [selectedTab, setSelectedTab] = useState('For you');
+  const [visitedTabs, setVisitedTabs] = useState({
+    'For you': true,
+    Shorts: false,
+    Live: false,
+  });
   const [isCategoriesModalVisible, setIsCategoriesModalVisible] =
     useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const renderContent = () => {
-    switch (selectedTab) {
-      case 'For you':
-        return <ForYou />;
-      case 'Shorts':
-        return <ShortsScreen />;
-      case 'Live':
-        return <LiveVideosScreen />;
-      default:
-        return null;
-    }
+  const selectTab = (tab: string) => {
+    setSelectedTab(tab);
+    setVisitedTabs(prev => ({...prev, [tab]: true}));
   };
 
   const toggleCategoryModal = () => {
@@ -59,7 +56,7 @@ const CreatorVideos = ({navigation}: CreatorVideosProps) => {
           <Pressable
             key={tab}
             hitSlop={20}
-            onPress={() => setSelectedTab(tab)}
+            onPress={() => selectTab(tab)}
             style={[
               styles.tabButton,
               selectedTab === tab && styles.tabButtonSelected,
@@ -84,7 +81,41 @@ const CreatorVideos = ({navigation}: CreatorVideosProps) => {
           )}
         </Pressable>
       </View>
-      {isLoading ? <Loader visible={isLoading} /> : renderContent()}
+      <View style={styles.contentContainer}>
+        {isLoading ? (
+          <Loader visible={isLoading} />
+        ) : (
+          <>
+            {visitedTabs['For you'] ? (
+              <View
+                style={[
+                  styles.feed,
+                  selectedTab !== 'For you' && styles.hiddenFeed,
+                ]}>
+                <ForYou isActive={selectedTab === 'For you'} />
+              </View>
+            ) : null}
+            {visitedTabs.Shorts ? (
+              <View
+                style={[
+                  styles.feed,
+                  selectedTab !== 'Shorts' && styles.hiddenFeed,
+                ]}>
+                <ShortsScreen isActive={selectedTab === 'Shorts'} />
+              </View>
+            ) : null}
+            {visitedTabs.Live ? (
+              <View
+                style={[
+                  styles.feed,
+                  selectedTab !== 'Live' && styles.hiddenFeed,
+                ]}>
+                <LiveVideosScreen />
+              </View>
+            ) : null}
+          </>
+        )}
+      </View>
 
       <CategoryModal
         visible={isCategoriesModalVisible}
@@ -144,10 +175,14 @@ const styles = StyleSheet.create({
     fontSize: fontSize.f12,
     fontFamily: fonts['Poppins-SemiBold'],
   },
-  loadingContainer: {
+  contentContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  },
+  feed: {
+    flex: 1,
+  },
+  hiddenFeed: {
+    display: 'none',
   },
   loadingText: {
     color: Colors.white,

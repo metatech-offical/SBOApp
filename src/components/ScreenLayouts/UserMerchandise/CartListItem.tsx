@@ -8,6 +8,7 @@ import useCart from '@hooks/useCart';
 import CustomDropDown from '@components/DropDown/CustomDropDown';
 import {ProductQuantityData} from '@utils/data';
 import {DeleteIcon} from '@assets/svg/ShortsIcon';
+import {isDummyProductId} from '@utils/dummyMerchandise';
 
 interface CartListItemProps {
   item: CartItem;
@@ -18,6 +19,9 @@ const CartListItem = ({item, onPress}: CartListItemProps) => {
   const {handRemoveFromCart, handUpdateCartItem} = useCart();
 
   const handleRemoveFromCart = async () => {
+    if (isDummyProductId(item?.productId?._id)) {
+      return;
+    }
     const payload = {
       productId: item?.productId?._id,
       variant: item?.variant,
@@ -27,6 +31,9 @@ const CartListItem = ({item, onPress}: CartListItemProps) => {
   };
 
   const handleUpdateCartItem = async (quantity: number) => {
+    if (isDummyProductId(item?.productId?._id)) {
+      return;
+    }
     const payload = {
       productId: item?.productId?._id,
       variant: item?.variant,

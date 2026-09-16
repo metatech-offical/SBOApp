@@ -19,14 +19,16 @@ import NewCommentSheet from '@components/Common/NewCommentSheet';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {screenHeight} from '@utils/general';
 import {Colors} from '@constant/colors';
+import {DUMMY_SHORTS_REELS, isDummyReelId} from '@utils/dummyVideos';
 
 const ShortsFeed = ({navigation, route}: ShortsFeedProps) => {
   const insets = useSafeAreaInsets();
-  const {shortsId, type, creatorId} = route?.params ?? {
+  const {shortsId, type, creatorId, feedItems} = route?.params ?? {
     shortsId: '',
     type: '',
     creatorId: '',
   };
+  const isDummyFeed = isDummyReelId(shortsId);
   const [visibleIndex, setVisibleIndex] = useState<number>(0);
   const [currentShortId, setCurrentShortId] = useState<string>('');
   const [shortsPage, setShortsPage] = useState<number>(1);
@@ -35,13 +37,19 @@ const ShortsFeed = ({navigation, route}: ShortsFeedProps) => {
   const newCommentSheetRef = useRef<any>(null);
 
   const {data: getAllShortsData, isFetching: isFetchingShorts} =
-    useGetAllShortsFeedQuery({
-      page: shortsPage,
-      limit: 10,
-      ...(type === 'single' && creatorId ? {creatorId} : {}),
-    });
+    useGetAllShortsFeedQuery(
+      {
+        page: shortsPage,
+        limit: 10,
+        ...(type === 'single' && creatorId ? {creatorId} : {}),
+      },
+      {skip: isDummyFeed},
+    );
 
-  const {data: userShortsData} = useGetShortsByIdQuery({id: shortsId});
+  const {data: userShortsData} = useGetShortsByIdQuery(
+    {id: shortsId},
+    {skip: !shortsId || isDummyFeed},
+  );
 
   const viewabilityConfig = useRef<ViewabilityConfig>({
     itemVisiblePercentThreshold: 80,
@@ -58,6 +66,18 @@ const ShortsFeed = ({navigation, route}: ShortsFeedProps) => {
   }).current;
 
   useEffect(() => {
+    if (isDummyFeed) {
+      const dummyList =
+        feedItems?.length > 0 ? feedItems : DUMMY_SHORTS_REELS;
+      const selected = dummyList.find((item: any) => item?._id === shortsId);
+      const rest = dummyList.filter((item: any) => item?._id !== shortsId);
+      setFeedsData(selected ? [selected, ...rest] : dummyList);
+      if (selected?._id || dummyList[0]?._id) {
+        setCurrentShortId(selected?._id || dummyList[0]._id);
+      }
+      return;
+    }
+
     if (shortsId && userShortsData?.data) {
       const specificShort = userShortsData.data;
       const allShorts = getAllShortsData?.data?.data ?? [];
@@ -97,7 +117,14 @@ const ShortsFeed = ({navigation, route}: ShortsFeedProps) => {
         }
       });
     }
-  }, [getAllShortsData, userShortsData, shortsPage, shortsId]);
+  }, [
+    getAllShortsData,
+    userShortsData,
+    shortsPage,
+    shortsId,
+    isDummyFeed,
+    feedItems,
+  ]);
 
   const handleCommentPress = (shortId: string) => {
     setCurrentShortId(shortId);
@@ -126,10 +153,11 @@ const ShortsFeed = ({navigation, route}: ShortsFeedProps) => {
     );
   };
 
-  const isLoadingFeeds =
-    !getAllShortsData ||
-    (shortsId && !userShortsData) ||
-    feedsData.length === 0;
+  const isLoadingFeeds = isDummyFeed
+    ? feedsData.length === 0
+    : !getAllShortsData ||
+      (shortsId && !userShortsData) ||
+      feedsData.length === 0;
 
   if (isLoadingFeeds) {
     return (

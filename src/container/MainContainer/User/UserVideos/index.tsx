@@ -1,13 +1,13 @@
 import React, {useState, useEffect} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {UserVideosProps} from '@navigation/screens';
-import AnimatedBackground from '@components/AnimationComponent/AnimationBackground';
+import GlowBackground from '@components/AnimationComponent/GlowBackground';
 import HomeHeader from '@components/ScreenLayouts/Home/HomeHeader';
 import {fonts} from '@constant/fontfamily';
 import ForYou from '@components/ScreenLayouts/CreatorVideos/ForYou';
 import {TABS} from '@utils/data';
 import ShortsScreen from '@components/ScreenLayouts/CreatorVideos/ShortsScreen';
-import {BottomArrowIcon, TopArrowIcon} from '@assets/svg/CommonIcons';
+import {ChevronDownSmallIcon} from '@assets/svg/HomeScreenIcon';
 import CategoryModal from '@components/ScreenLayouts/CreatorVideos/CategoryModal';
 import LiveVideosScreen from '@components/ScreenLayouts/CreatorVideos/LiveVideosScreen';
 import Loader from '@components/CustomLoader/Loader';
@@ -16,20 +16,18 @@ import {fontSize} from '@constant/fontSize';
 
 const UserVideos = ({navigation}: UserVideosProps) => {
   const [selectedTab, setSelectedTab] = useState('For you');
+  const [visitedTabs, setVisitedTabs] = useState({
+    'For you': true,
+    Shorts: false,
+    Live: false,
+  });
   const [isCategoriesModalVisible, setIsCategoriesModalVisible] =
     useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const renderContent = () => {
-    switch (selectedTab) {
-      case 'For you':
-        return <ForYou />;
-      case 'Shorts':
-        return <ShortsScreen />;
-      case 'Live':
-        return <LiveVideosScreen />;
-      default:
-        return null;
-    }
+
+  const selectTab = (tab: string) => {
+    setSelectedTab(tab);
+    setVisitedTabs(prev => ({...prev, [tab]: true}));
   };
 
   const toggleCategoryModal = () => {
@@ -47,18 +45,14 @@ const UserVideos = ({navigation}: UserVideosProps) => {
 
   return (
     <View style={styles.container}>
-      <AnimatedBackground
-        animationSource={require('@assets/animations/AuthAnimation4.json')}
-        zIndex={0}
-        backgroundColor={'#1a1538'}
-      />
-      <HomeHeader isCreator={false} />
+      <GlowBackground />
+      <HomeHeader isCreator={false} showLogo showBecomeCreator />
       <View style={styles.tabContainer}>
         {TABS.map(tab => (
           <TouchableOpacity
             key={tab}
             hitSlop={20}
-            onPress={() => setSelectedTab(tab)}
+            onPress={() => selectTab(tab)}
             style={[
               styles.tabButton,
               selectedTab === tab && styles.tabButtonSelected,
@@ -77,14 +71,49 @@ const UserVideos = ({navigation}: UserVideosProps) => {
           onPress={toggleCategoryModal}
           activeOpacity={0.9}>
           <Text style={styles.categoriesLabel}>Categories</Text>
-          {isCategoriesModalVisible ? (
-            <TopArrowIcon width={24} height={24} stroke={Colors.white} />
-          ) : (
-            <BottomArrowIcon width={24} height={24} stroke={Colors.white} />
-          )}
+          <View
+            style={
+              isCategoriesModalVisible ? styles.chevronUp : undefined
+            }>
+            <ChevronDownSmallIcon />
+          </View>
         </TouchableOpacity>
       </View>
-      {isLoading ? <Loader visible={isLoading} /> : renderContent()}
+      <View style={styles.contentContainer}>
+        {isLoading ? (
+          <Loader visible={isLoading} />
+        ) : (
+          <>
+            {visitedTabs['For you'] ? (
+              <View
+                style={[
+                  styles.feed,
+                  selectedTab !== 'For you' && styles.hiddenFeed,
+                ]}>
+                <ForYou isActive={selectedTab === 'For you'} />
+              </View>
+            ) : null}
+            {visitedTabs.Shorts ? (
+              <View
+                style={[
+                  styles.feed,
+                  selectedTab !== 'Shorts' && styles.hiddenFeed,
+                ]}>
+                <ShortsScreen isActive={selectedTab === 'Shorts'} />
+              </View>
+            ) : null}
+            {visitedTabs.Live ? (
+              <View
+                style={[
+                  styles.feed,
+                  selectedTab !== 'Live' && styles.hiddenFeed,
+                ]}>
+                <LiveVideosScreen />
+              </View>
+            ) : null}
+          </>
+        )}
+      </View>
 
       <CategoryModal
         visible={isCategoriesModalVisible}
@@ -100,7 +129,7 @@ export default UserVideos;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1538',
+    overflow: 'hidden',
   },
   scrollView: {
     flex: 1,
@@ -108,44 +137,56 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 4,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
     alignItems: 'center',
   },
   tabButton: {
+    height: 27,
     paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 10,
+    borderRadius: 13.5,
+    marginRight: 3,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: 'transparent',
   },
   tabButtonSelected: {
     backgroundColor: 'rgba(255,255,255,0.1)',
   },
   tabLabel: {
-    color: 'rgba(255,255,255,0.6)',
+    color: 'rgba(255,255,255,0.5)',
     fontSize: fontSize.f12,
     fontFamily: fonts['Poppins-SemiBold'],
+    includeFontPadding: false,
   },
   tabLabelSelected: {
     color: Colors.white,
     fontFamily: fonts['Poppins-SemiBold'],
   },
   categoriesButton: {
+    height: 27,
     marginLeft: 'auto',
     paddingHorizontal: 8,
-    paddingVertical: 6,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 4,
   },
   categoriesLabel: {
     color: Colors.white,
     fontSize: fontSize.f12,
     fontFamily: fonts['Poppins-SemiBold'],
   },
+  chevronUp: {
+    transform: [{rotate: '180deg'}],
+  },
   contentContainer: {
     flex: 1,
+  },
+  feed: {
+    flex: 1,
+  },
+  hiddenFeed: {
+    display: 'none',
   },
   addButton: {
     width: 42,

@@ -5,6 +5,7 @@ import {BlurView as RNBlurView} from '@react-native-community/blur';
 interface BlurViewProps extends ViewProps {
   blurType?: 'dark' | 'light' | 'xlight';
   blurAmount?: number;
+  reducedTransparencyFallbackColor?: string;
 }
 
 const BlurView: React.FC<BlurViewProps> = ({
@@ -12,6 +13,7 @@ const BlurView: React.FC<BlurViewProps> = ({
   style,
   blurType = 'dark',
   blurAmount = 10,
+  reducedTransparencyFallbackColor = 'rgba(0, 0, 0, 0.6)',
   ...rest
 }) => {
   return (
@@ -20,7 +22,7 @@ const BlurView: React.FC<BlurViewProps> = ({
         style={StyleSheet.absoluteFill}
         blurType={blurType}
         blurAmount={blurAmount}
-        reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.6)"
+        reducedTransparencyFallbackColor={reducedTransparencyFallbackColor}
       />
       {children}
     </View>

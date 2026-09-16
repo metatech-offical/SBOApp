@@ -8,6 +8,7 @@ import {useGetLiveEventsQuery} from '@rtkServices/CreatorTicketingService';
 import {useNavigation} from '@react-navigation/native';
 import {RootState, useAppSelector} from '@store/index';
 import SearchInput from '@components/CustomInputs/SearchInput';
+import {DUMMY_LIVE_EVENTS, filterDummyEvents} from '@utils/dummyTicketing';
 
 interface LiveEventsProps {
   searchQuery: string;
@@ -23,6 +24,9 @@ const LiveEvents = ({searchQuery, onSearchChange}: LiveEventsProps) => {
     creatorId: user?._id || '',
     search: searchQuery || undefined,
   });
+  const events = liveEvents?.data?.events?.length
+    ? liveEvents.data.events
+    : filterDummyEvents(DUMMY_LIVE_EVENTS, {search: searchQuery});
 
   return (
     <View style={styles.container}>
@@ -44,7 +48,7 @@ const LiveEvents = ({searchQuery, onSearchChange}: LiveEventsProps) => {
             />
           }
           stickyHeaderIndices={[0]}
-          data={liveEvents?.data?.events || []}
+          data={events}
           ListEmptyComponent={<NodataFound />}
           showsVerticalScrollIndicator={false}
           renderItem={({item}) => {

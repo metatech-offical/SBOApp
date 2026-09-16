@@ -1,58 +1,137 @@
-import React, {useMemo, useState} from 'react';
+import React, {useState} from 'react';
 import {
-  FlatList,
+  ActivityIndicator,
+  Dimensions,
   ScrollView,
   StyleSheet,
   Text,
-  View,
-  Pressable,
   TouchableOpacity,
-  Platform,
+  View,
 } from 'react-native';
 import {fonts} from '@constant/fontfamily';
 import {UpgradePlanProps} from '@navigation/screens';
-import {planData} from '@utils/data';
-import {BackArrow, CheckIcon, VerifiedIcon} from '@assets/svg/AuthFlowIcons';
-import {CrossIcon} from '@assets/svg/AuthFlowIcons';
-import CustomButton from '@components/CustomButtons/CustomButton';
+import {BackArrow, VerifiedIcon} from '@assets/svg/AuthFlowIcons';
+import GlowBackground from '@components/AnimationComponent/GlowBackground';
 import LinearGradient from 'react-native-linear-gradient';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useUpdateMembershipPlanMutation} from '@rtkServices/ProfileService';
+import {
+  useGetUserProfileByIdQuery,
+  useUpdateMembershipPlanMutation,
+} from '@rtkServices/ProfileService';
 import {useToastMessage} from '@hooks/useToastMessage';
 import {Colors} from '@constant/colors';
 import {fontSize} from '@constant/fontSize';
 import FastImage from 'react-native-fast-image';
+import {RootState, useAppSelector} from '@store/index';
+import {navigate} from '@navigation/utils';
+import {AboutData} from '@utils/data';
+
+const formatProperName = (...candidates: Array<string | undefined | null>) => {
+  for (const value of candidates) {
+    const raw = value?.trim();
+    if (!raw) {
+      continue;
+    }
+    const withoutHandle = raw.startsWith('@') ? raw.slice(1) : raw;
+    const localPart = withoutHandle.includes('@')
+      ? withoutHandle.split('@')[0]
+      : withoutHandle;
+    const cleaned = localPart.replace(/[._-]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!cleaned) {
+      continue;
+    }
+    return cleaned
+      .split(' ')
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  }
+  return '';
+};
+
+const {width: SCREEN_WIDTH} = Dimensions.get('window');
+const H_PAD = 24;
+const AVATAR_SIZE = Math.round((150 / 393) * SCREEN_WIDTH);
+const RING_SIZE = Math.round((164 / 393) * SCREEN_WIDTH);
+
+type PlanBadge = {
+  type: 'popular' | 'best';
+  label: string;
+} | null;
+
+type DisplayPlan = {
+  id: string;
+  label: string;
+  priceLabel: string;
+  badge: PlanBadge;
+};
+
+const PLANS: DisplayPlan[] = [
+  {
+    id: 'monthly',
+    label: 'Monthly',
+    priceLabel: '$14.99/M',
+    badge: null,
+  },
+  {
+    id: 'quarterly',
+    label: '3 Months',
+    priceLabel: '$11.99/M',
+    badge: {type: 'popular', label: 'Popular'},
+  },
+  {
+    id: 'yearly',
+    label: 'Yearly',
+    priceLabel: '$8.50/M',
+    badge: {type: 'best', label: 'Best value'},
+  },
+];
+
+const BENEFITS = [
+  {
+    title: 'Subscriber badge',
+    description: 'Match and chat with people anywhere in the world.',
+  },
+  {
+    title: 'Exclusive Content',
+    description: 'Match and chat with people anywhere in the world.',
+  },
+  {
+    title: 'Ad-Free',
+    description: 'Match and chat with people anywhere in the world.',
+  },
+];
 
 const UpgradePlan: React.FC<UpgradePlanProps> = ({navigation, route}) => {
   const {showError, showSuccess} = useToastMessage();
   const {currentPlan} = route?.params || {};
-  const [selectedPlanIndex, setSelectedPlanIndex] = useState(1);
-  const [upgradePlan] = useUpdateMembershipPlanMutation();
-  const enhancedData = useMemo(() => ['Header', ...planData.features], []);
-  const {top} = useSafeAreaInsets();
+  const {user} = useAppSelector((state: RootState) => state.user);
+  const {data: profileResponse} = useGetUserProfileByIdQuery(
+    {id: user?._id},
+    {skip: !user?._id},
+  );
+  const profile = profileResponse?.data;
+  const [selectedPlanId, setSelectedPlanId] = useState(PLANS[1].id);
+  const [upgradePlan, {isLoading}] = useUpdateMembershipPlanMutation();
+  const {top, bottom} = useSafeAreaInsets();
+  const alreadyCreator =
+    String(
+      currentPlan || profile?.membership || user?.membership || '',
+    ).toLowerCase() === 'creator';
 
-  const getButtonColors = () => {
-    if (selectedPlanIndex === 1) {
-      return {
-        backgroundColor: Colors.white,
-        textColor: Colors.white,
-        borderColor: Colors.white,
-        opacity: 1,
-      };
-    }
-    return {
-      backgroundColor: Colors.grey,
-      textColor: Colors.white,
-      borderColor: Colors.grey,
-      opacity: 0.5,
-    };
-  };
+  const displayName = formatProperName(
+    profile?.displayName,
+    user?.displayName,
+    profile?.username,
+    user?.username,
+  );
+  const profilePicture = profile?.profilePicture || user?.profilePicture;
 
   const handleUpgrade = async () => {
-    const selectedPlan = planData.plans[selectedPlanIndex];
-
+    if (alreadyCreator) {
+      return;
+    }
     const res = await upgradePlan({
-      membership: selectedPlan.name.toLowerCase(),
+      membership: 'creator',
     });
     if (res?.data?.success) {
       showSuccess(res?.data?.message);
@@ -65,275 +144,179 @@ const UpgradePlan: React.FC<UpgradePlanProps> = ({navigation, route}) => {
     }
   };
 
-  const renderPlanItem = ({item, index}: {item: string; index: number}) => {
-    if (item === 'Header') {
+  const renderBadge = (badge: PlanBadge) => {
+    if (!badge) {
+      return null;
+    }
+    if (badge.type === 'popular') {
       return (
-        <View style={styles.itemContainer2}>
-          <View style={styles.featureHeaderItem} />
-          {planData?.plans?.map((plan, i) => {
-            const isCurrentPlan = currentPlan === plan.name.toLowerCase();
-            const isDisabled =
-              isCurrentPlan || (currentPlan === 'creator' && i === 0);
-
-            return (
-              <Pressable
-                key={i}
-                style={[
-                  styles.headerItem,
-                  i === 1 && selectedPlanIndex === 1 && styles.creatorPlan,
-                  isCurrentPlan && styles.currentPlan,
-                  isDisabled && styles.disabledPlan,
-                ]}
-                onPress={() => !isDisabled && setSelectedPlanIndex(i)}
-                disabled={isDisabled}>
-                {isCurrentPlan && (
-                  <Text style={styles.currentPlanBadge}>Current Plan</Text>
-                )}
-                <Text
-                  style={[
-                    styles.planNameText,
-                    i === 1 &&
-                      selectedPlanIndex === 1 &&
-                      styles.creatorPlanText,
-                    isDisabled && styles.disabledText,
-                  ]}>
-                  {plan.name}
-                </Text>
-                <View style={styles.priceContainer}>
-                  {plan.name === 'Creator' && i === 1 ? (
-                    <LinearGradient
-                      colors={['#AC7815', '#D5A64D', '#E1B353']}
-                      style={styles.priceContainerGradient}>
-                      <Text
-                        style={[
-                          styles.planPriceText,
-                          i === 1 &&
-                            selectedPlanIndex === 1 &&
-                            styles.creatorPlanText,
-                        ]}>
-                        {plan.price}
-                      </Text>
-                    </LinearGradient>
-                  ) : (
-                    <View style={styles.priceContainerGradient}>
-                      <Text
-                        style={[
-                          styles.planPriceText,
-                          i === 1 &&
-                            selectedPlanIndex === 1 &&
-                            styles.creatorPlanText,
-                        ]}>
-                        {plan.price}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </Pressable>
-            );
-          })}
+        <View style={styles.popularBadge}>
+          <Text style={styles.popularBadgeText}>{badge.label}</Text>
         </View>
       );
     }
-
-    const isLastItem = index === enhancedData.length - 1;
-
     return (
-      <View style={styles.itemContainer}>
-        <Text style={styles.itemText}>{item}</Text>
-        {planData?.plans?.map((plan, i) => {
-          const isCurrentPlan = currentPlan === plan.name.toLowerCase();
-          const isDisabled =
-            isCurrentPlan || (currentPlan === 'creator' && i === 0);
-          const featureValue = plan.features[index - 1];
-          const isVerificationFeature = item === 'Verification';
-
-          return (
-            <Pressable
-              key={i}
-              style={[
-                styles.itemValueContainer,
-                i === 1 && selectedPlanIndex === 1 && styles.creatorFeatureItem,
-                isCurrentPlan && styles.currentPlanFeature,
-                isLastItem && i === 1 && styles.creatorLastItem,
-                isDisabled && styles.disabledPlan,
-              ]}
-              onPress={() => !isDisabled && setSelectedPlanIndex(i)}
-              disabled={isDisabled}>
-              {typeof featureValue === 'boolean' ? (
-                <View
-                  style={[
-                    styles.checkmarkContainer,
-                    featureValue && i === 1 && styles.creatorCheckmark,
-                  ]}>
-                  {isVerificationFeature && featureValue && i === 1 ? (
-                    <VerifiedIcon width={30} height={30} />
-                  ) : (
-                    (() => {
-                      const showCheck = isDisabled ? true : featureValue;
-                      const isCheck = !!showCheck;
-                      let iconColor = Colors.white; // Default white color
-                      if (selectedPlanIndex === i) {
-                        if (i === 0) {
-                          iconColor = Colors.white; // Free plan - white
-                        } else if (i === 1) {
-                          iconColor = Colors.white; // Creator plan - white
-                        }
-                      } else {
-                        iconColor = Colors.white;
-                      }
-
-                      return isCheck ? (
-                        <CheckIcon fill={iconColor} />
-                      ) : (
-                        <CrossIcon fill={iconColor} />
-                      );
-                    })()
-                  )}
-                </View>
-              ) : (
-                <Text
-                  style={[
-                    styles.itemValue,
-                    i === 1 && {color: buttonColors.textColor},
-                    isDisabled && styles.disabledText,
-                  ]}>
-                  {featureValue}
-                </Text>
-              )}
-            </Pressable>
-          );
-        })}
-      </View>
+      <LinearGradient
+        colors={['#FFC70F', '#FFE695', '#F1B800']}
+        start={{x: 0.2, y: 0}}
+        end={{x: 0.8, y: 1}}
+        style={styles.bestValueBadge}>
+        <Text style={styles.bestValueBadgeText}>{badge.label}</Text>
+      </LinearGradient>
     );
   };
 
-  const buttonColors = getButtonColors();
-  const selectedPlan = planData.plans[selectedPlanIndex];
-  const isUpgradeAvailable =
-    selectedPlanIndex !== 0 && currentPlan !== selectedPlan.name.toLowerCase();
+  const renderPlanCard = (plan: DisplayPlan) => {
+    const isSelected = selectedPlanId === plan.id;
+    const row = (
+      <View style={[styles.planRow, !isSelected && styles.unselectedPlanRow]}>
+        <View style={styles.planLeft}>
+          <Text style={styles.planTitle}>{plan.label}</Text>
+          {renderBadge(plan.badge)}
+        </View>
+        <Text style={styles.planPrice}>{plan.priceLabel}</Text>
+      </View>
+    );
+
+    if (isSelected) {
+      return (
+        <TouchableOpacity
+          key={plan.id}
+          activeOpacity={0.85}
+          onPress={() => setSelectedPlanId(plan.id)}>
+          <LinearGradient
+            colors={['#8800FF', '#1AD655']}
+            start={{x: 0.5, y: 0}}
+            end={{x: 0.5, y: 1}}
+            style={styles.selectedPlanBorder}>
+            <View style={styles.selectedPlanInner}>{row}</View>
+          </LinearGradient>
+        </TouchableOpacity>
+      );
+    }
+
+    return (
+      <TouchableOpacity
+        key={plan.id}
+        activeOpacity={0.85}
+        onPress={() => setSelectedPlanId(plan.id)}
+        style={styles.unselectedPlanCard}>
+        {row}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#1f0e52', '#140b2e']} style={{flex: 1}}>
-        <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
-          <View style={[styles.subViewStyle, {marginTop: top}]}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                position: 'relative',
-              }}>
-              <TouchableOpacity
-                onPress={() => navigation.goBack()}
-                style={styles.icon}>
-                <BackArrow
-                  color={Colors.white}
-                  height={23}
-                  width={23}
-                  hitSlop={20}
-                />
-              </TouchableOpacity>
-              <Text style={[styles.titleStyle, {flex: 1}]}>
-                Upgrade Your Plan
-              </Text>
-            </View>
-            <Text style={styles.subTitleStyle}>
-              Stream Exclusive Live streams, Immersive VR Content, also Monetize
-              Content and many more
-            </Text>
+      <GlowBackground />
+      <View style={[styles.header, {paddingTop: top + 4}]}>
+        <TouchableOpacity
+          hitSlop={20}
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}>
+          <BackArrow color={Colors.white} height={20} width={20} opacity={0.5} />
+        </TouchableOpacity>
+      </View>
 
-            {/* Early Creators Banner */}
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {paddingBottom: Math.max(bottom, 24) + 20},
+        ]}>
+        <View style={styles.userImageContainer}>
+          <View style={styles.avatarRing}>
             <FastImage
-              source={require('@assets/images/yellowBgImage.png')}
-              style={styles.bannerImage}>
-              <View style={{padding: 13}}>
-                <Text style={styles.bannerTitle}>
-                  Early Creators Get in Free !
-                </Text>
-                <Text style={styles.bannerSubtitle}>
-                  Join now and secure your spot as one of the first creators on
-                  our platform - no £9.99/month fee, ever.
-                </Text>
-              </View>
-            </FastImage>
-          </View>
-
-          <View style={styles.mainContainer}>
-            <LinearGradient
-              colors={['#3A2F59', '#3A2F59']}
-              style={{flex: 1, borderRadius: 12}}>
-              <FlatList
-                data={enhancedData}
-                renderItem={renderPlanItem}
-                keyExtractor={(item, index) => index.toString()}
-                bounces={false}
-                scrollEnabled={false}
-                style={{zIndex: 2}}
-                contentContainerStyle={{paddingBottom: 16, paddingTop: 10}}
-              />
-              <View style={styles.popularButton}>
-                <Text
-                  style={{
-                    color: Colors.white,
-                    fontSize: fontSize.f13,
-                    fontFamily: fonts['Poppins-Regular'],
-                  }}>
-                  Popular
-                </Text>
-              </View>
-            </LinearGradient>
-          </View>
-
-          <View style={[styles.subViewStyle]}>
-            <CustomButton
-              text={isUpgradeAvailable ? 'Upgrade Now' : 'Current Plan'}
-              onPress={handleUpgrade}
-              disabled={!isUpgradeAvailable}
-              textStyle={[
-                styles.buttonText,
-                {
-                  color: isUpgradeAvailable ? Colors.black : '#666',
-                  opacity: isUpgradeAvailable ? buttonColors.opacity : 0.5,
-                },
-              ]}
-              btnStyle={[
-                styles.btnStyle,
-                {
-                  backgroundColor: isUpgradeAvailable
-                    ? buttonColors.backgroundColor
-                    : '#red',
-                  borderColor: isUpgradeAvailable
-                    ? buttonColors.borderColor
-                    : '#666',
-                  borderWidth: 1,
-                },
-              ]}
-              iconRight={
-                isUpgradeAvailable ? (
-                  <FastImage
-                    source={require('@assets/images/SubmitIcon.png')}
-                    style={styles.submitIcon}
-                  />
-                ) : undefined
+              source={
+                profilePicture
+                  ? {uri: profilePicture}
+                  : require('@assets/images/DummyUserImage.png')
               }
+              style={styles.userImageStyle}
             />
-            {isUpgradeAvailable && (
-              <Text style={styles.descriptionStyle}>
-                By tapping Continue, you will be charged, your subscription will
-                auto-renew for the same price and package length until you
-                cancel via App Store settings, and you agree to our{' '}
-                <Text style={{textDecorationLine: 'underline'}}>Terms</Text>.
-              </Text>
-            )}
-            {!isUpgradeAvailable && currentPlan === 'creator' && (
-              <Text style={styles.descriptionStyle}>
-                You're already on the Creator plan with access to all premium
-                features.
-              </Text>
+          </View>
+          <View style={styles.badgeRow}>
+            <View style={styles.liveBadge}>
+              <Text style={styles.liveBadgeText}>LIVE</Text>
+            </View>
+            <View style={styles.vrBadge}>
+              <Text style={styles.vrBadgeText}>VR</Text>
+            </View>
+          </View>
+        </View>
+
+        {!!displayName && (
+          <View style={styles.userNameRow}>
+            <Text numberOfLines={1} style={styles.userNameStyle}>
+              {displayName}
+            </Text>
+            {(profile?.verified || user?.verified) && (
+              <VerifiedIcon width={22} height={22} />
             )}
           </View>
-        </ScrollView>
-      </LinearGradient>
+        )}
+
+        <View style={styles.planContainer}>{PLANS.map(renderPlanCard)}</View>
+
+        <TouchableOpacity
+          disabled={isLoading || alreadyCreator}
+          onPress={handleUpgrade}
+          activeOpacity={0.85}>
+          <LinearGradient
+            colors={['#F7CA39', '#CD9D02', '#F7CA3A']}
+            start={{x: 0.15, y: 0}}
+            end={{x: 0.85, y: 1}}
+            style={styles.subscribeBorder}>
+            <View
+              style={[
+                styles.subscribeInner,
+                alreadyCreator && styles.subscribeInnerDisabled,
+              ]}>
+              {isLoading ? (
+                <ActivityIndicator size="small" color={Colors.white} />
+              ) : (
+                <Text style={styles.subscribeText}>
+                  {alreadyCreator ? 'Current Plan' : 'Subscribe'}
+                </Text>
+              )}
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <Text style={styles.terms}>
+          {alreadyCreator
+            ? "You're already on the Creator plan with access to all premium features."
+            : 'By tapping Subscribe, you will be charged and your subscription will auto-renew for the same price and package length until you cancel via settings, and you agree to our '}
+          {!alreadyCreator && (
+            <Text
+              style={styles.termsLink}
+              onPress={() =>
+                navigate('AboutContentScreen', {data: AboutData[1]})
+              }>
+              Terms
+            </Text>
+          )}
+          {!alreadyCreator && '.'}
+        </Text>
+
+        <View style={styles.benefitsCard}>
+          <View style={styles.includedPill}>
+            <Text style={styles.includedText}>Included with Subscription</Text>
+          </View>
+          <View style={styles.benefitsSection}>
+            {BENEFITS.map(item => (
+              <View key={item.title} style={styles.benefitRow}>
+                <VerifiedIcon width={22} height={22} />
+                <View style={styles.benefitTextContainer}>
+                  <Text style={styles.benefitTitle}>{item.title}</Text>
+                  <Text style={styles.benefitDes}>{item.description}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
     </View>
   );
 };
@@ -341,218 +324,252 @@ const UpgradePlan: React.FC<UpgradePlanProps> = ({navigation, route}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#100E12',
   },
-  titleStyle: {
-    color: Colors.white,
-    fontSize: fontSize.f26,
-    fontFamily: fonts['Poppins-Bold'],
-    letterSpacing: 0.5,
-    textAlign: 'center',
-    lineHeight: 38,
+  header: {
+    paddingHorizontal: 10,
+    zIndex: 2,
   },
-  subTitleStyle: {
-    color: Colors.white,
-    fontSize: fontSize.f10,
-    fontFamily: fonts['Poppins-Regular'],
-    marginTop: 10,
-    textAlign: 'left',
-    lineHeight: 18,
-  },
-  subViewStyle: {
-    padding: 15,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    marginTop: -13,
-  },
-  buttonText: {
-    textTransform: 'none',
-    fontFamily: fonts['Poppins-Medium'],
-    fontSize: fontSize.f16,
-  },
-  descriptionStyle: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: fontSize.f10,
-    fontFamily: fonts['Poppins-Regular'],
-    lineHeight: 18,
-    textAlign: 'center',
-    marginTop: 20,
-    marginBottom: 40,
-  },
-  btnStyle: {
-    height: 52,
-    borderRadius: 12,
-  },
-  itemContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-  },
-  featureHeaderItem: {
-    width: '50%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerItem: {
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    width: '22%',
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    position: 'relative',
-  },
-  priceContainer: {
+  backButton: {
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  priceContainerGradient: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 7,
-    height: 27,
-    width: 65,
-  },
-  currentPlan: {
-    backgroundColor: '#4CAF50',
-    borderWidth: 2,
-    borderColor: '#4CAF50',
-  },
-  currentPlanBadge: {
-    position: 'absolute',
-    top: 5,
-    backgroundColor: '#2E7D32',
-    color: Colors.white,
-    fontSize: fontSize.f8,
-    fontFamily: fonts['Poppins-Medium'],
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    borderRadius: 4,
-    textAlign: 'center',
-  },
-  currentPlanFeature: {
-    backgroundColor: '#4CAF50',
-    borderWidth: 1,
-    borderColor: '#4CAF50',
-  },
-  creatorPlan: {
-    backgroundColor: '#6C6382',
-    paddingTop: 15,
-  },
-  creatorFeatureItem: {
-    backgroundColor: '#6C6382',
-    borderWidth: 1,
-    borderColor: '#6C6382',
-  },
-  creatorLastItem: {
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
-  },
-  planNameText: {
-    color: Colors.white,
-    fontSize: fontSize.f14,
-    fontFamily: fonts['Poppins-Medium'],
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  planPriceText: {
-    color: Colors.white,
-    fontSize: fontSize.f14,
-    fontFamily: fonts['Poppins-Medium'],
-    textAlign: 'center',
-  },
-  creatorPlanText: {
-    color: Colors.white,
-  },
-  itemText: {
-    width: '50%',
-    color: Colors.white,
-    fontSize: fontSize.f12,
-    fontFamily: fonts['Poppins-Regular'],
-    paddingVertical: 15,
-    lineHeight: 16,
-    paddingLeft: 15,
-    textAlign: 'left',
-  },
-  itemValueContainer: {
-    width: '22%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14.2,
-  },
-  itemValue: {
-    color: Colors.white,
-    fontSize: fontSize.f12,
-    fontFamily: fonts['Poppins-Regular'],
-    textAlign: 'center',
-    lineHeight: 16,
-  },
-  checkmarkContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  creatorCheckmark: {},
-  disabledPlan: {
-    opacity: 1,
-  },
-  disabledText: {
-    color: Colors.white,
-  },
-  mainContainer: {
+  scroll: {
     flex: 1,
-    marginHorizontal: 10,
-    borderRadius: 12,
-    overflow: 'hidden',
-    paddingHorizontal: 8,
-    paddingBottom: 16,
   },
-  itemContainer2: {
+  scrollContent: {
+    paddingHorizontal: H_PAD,
+  },
+  userImageContainer: {
+    alignSelf: 'center',
+    width: RING_SIZE,
+    height: RING_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  avatarRing: {
+    width: RING_SIZE,
+    height: RING_SIZE,
+    borderRadius: RING_SIZE / 2,
+    borderWidth: 4,
+    borderColor: '#1AD655',
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userImageStyle: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
+  },
+  badgeRow: {
+    position: 'absolute',
+    bottom: -2,
     flexDirection: 'row',
-    justifyContent: 'flex-start',
-    minHeight: 50,
-    alignItems: 'flex-end',
-  },
-  icon: {
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 4,
   },
-  submitIcon: {
-    width: 16,
-    height: 16,
-    marginLeft: 8,
-    tintColor: Colors.black,
+  liveBadge: {
+    backgroundColor: '#8800FF',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 3,
+    minWidth: 28,
+    alignItems: 'center',
   },
-  bannerImage: {
-    width: '100%',
-    borderRadius: 20,
-    overflow: 'hidden',
-    marginTop: 25,
-    marginBottom: 5,
-  },
-  bannerTitle: {
+  liveBadgeText: {
+    fontSize: fontSize.f8,
     color: Colors.white,
-    fontSize: fontSize.f20,
+    fontFamily: fonts['Poppins-Bold'],
+    letterSpacing: 0.6,
+  },
+  vrBadge: {
+    backgroundColor: '#0B63F6',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 3,
+    minWidth: 24,
+    alignItems: 'center',
+  },
+  vrBadgeText: {
+    fontSize: fontSize.f8,
+    color: Colors.white,
+    fontFamily: fonts['Poppins-Bold'],
+    letterSpacing: 0.6,
+  },
+  userNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 16,
+    paddingHorizontal: 8,
+    gap: 8,
+  },
+  userNameStyle: {
+    fontSize: fontSize.f32,
+    color: Colors.white,
     fontFamily: fonts['Poppins-SemiBold'],
-    marginBottom: 5,
-    marginLeft: 10,
+    textAlign: 'center',
+    maxWidth: '78%',
   },
-  bannerSubtitle: {
+  planContainer: {
+    width: '100%',
+    marginTop: 28,
+    gap: 12,
+  },
+  unselectedPlanCard: {
+    minHeight: 78,
+    borderRadius: 10,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  selectedPlanBorder: {
+    borderRadius: 12,
+    padding: 4,
+  },
+  selectedPlanInner: {
+    minHeight: 74,
+    borderRadius: 8,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(16, 14, 18, 0.92)',
+  },
+  planRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 22,
+    zIndex: 1,
+  },
+  unselectedPlanRow: {
+    opacity: 0.6,
+  },
+  planLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 1,
+    paddingRight: 12,
+  },
+  planTitle: {
+    fontSize: fontSize.f20,
     color: Colors.white,
-    fontSize: fontSize.f12,
-    fontFamily: fonts['Poppins-Regular'],
-    lineHeight: 18,
-    marginLeft: 10,
+    fontFamily: fonts['Poppins-SemiBold'],
   },
-  popularButton: {
+  planPrice: {
+    fontSize: fontSize.f18,
+    color: Colors.white,
+    fontFamily: fonts['Poppins-SemiBold'],
+  },
+  popularBadge: {
+    backgroundColor: '#1F9854',
+    borderRadius: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    minHeight: 17,
+    justifyContent: 'center',
+  },
+  popularBadgeText: {
+    fontSize: fontSize.f8,
+    color: Colors.white,
+    fontFamily: fonts['Poppins-Medium'],
+  },
+  bestValueBadge: {
+    borderRadius: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    minHeight: 17,
+    justifyContent: 'center',
+  },
+  bestValueBadgeText: {
+    fontSize: fontSize.f8,
+    color: '#5E3E13',
+    fontFamily: fonts['Poppins-Medium'],
+  },
+  subscribeBorder: {
+    marginTop: 24,
+    borderRadius: 23,
+    padding: 1.5,
+  },
+  subscribeInner: {
+    minHeight: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(16, 14, 18, 0.92)',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 37,
-    width: 100,
-    backgroundColor: '#1EB54C',
-    borderRadius: 12,
-    alignSelf: 'flex-end',
-    marginBottom: 12,
-    // position: 'absolute',
-    // bottom: 0,
-    right: Platform.OS === 'ios' ? 26 : 20,
+  },
+  subscribeInnerDisabled: {
+    opacity: 0.6,
+  },
+  subscribeText: {
+    fontSize: fontSize.f16,
+    color: Colors.white,
+    fontFamily: fonts['Poppins-SemiBold'],
+  },
+  terms: {
+    fontSize: fontSize.f10,
+    fontFamily: fonts['Poppins-Regular'],
+    textAlign: 'left',
+    color: '#8D8C8C',
+    marginTop: 16,
+    lineHeight: 18,
+  },
+  termsLink: {
+    textDecorationLine: 'underline',
+    color: '#8D8C8C',
+  },
+  benefitsCard: {
+    marginTop: 42,
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    paddingTop: 30,
+    paddingBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(47, 46, 46, 0.35)',
+  },
+  includedPill: {
+    position: 'absolute',
+    top: -13,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    minHeight: 27,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  includedText: {
+    fontSize: fontSize.f12,
+    fontFamily: fonts['Poppins-Medium'],
+    color: Colors.white,
+  },
+  benefitsSection: {
+    gap: 18,
+  },
+  benefitRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  benefitTextContainer: {
+    flex: 1,
+  },
+  benefitTitle: {
+    fontSize: fontSize.f16,
+    fontFamily: fonts['Poppins-SemiBold'],
+    color: Colors.white,
+    marginBottom: 2,
+  },
+  benefitDes: {
+    fontSize: fontSize.f13,
+    fontFamily: fonts['Poppins-Regular'],
+    color: '#8D8C8C',
+    lineHeight: 20,
   },
 });
 

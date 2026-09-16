@@ -5,6 +5,7 @@ import {fonts} from '@constant/fontfamily';
 import useWishlist from '@hooks/useWishlist';
 import {Colors} from '@constant/colors';
 import {fontSize} from '@constant/fontSize';
+import {isDummyProductId} from '@utils/dummyMerchandise';
 
 const MerchandiseProductItem = ({
   item,
@@ -18,7 +19,16 @@ const MerchandiseProductItem = ({
   const {handAddToWishlist, handRemoveFromWishlist} = useWishlist();
   const [isLiked, setIsLiked] = useState(item?.isAddedToWishlist || false);
 
+  const price =
+    item?.variants && item?.variants?.length > 0
+      ? Math.min(...item.variants.map(variant => variant.price))
+      : item?.price;
+
   const handleWishlist = async () => {
+    if (isDummyProductId(item?._id)) {
+      setIsLiked(prev => !prev);
+      return;
+    }
     if (isLiked) {
       await handRemoveFromWishlist({productId: item?._id});
       setIsLiked(false);
@@ -45,15 +55,14 @@ const MerchandiseProductItem = ({
           style={styles.image}
           resizeMode={FastImage.resizeMode.cover}
         />
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>
-            # {item?.category || 'Outerwear'}
-          </Text>
+        <View style={styles.pricePill}>
+          <Text style={styles.price}>£{price}</Text>
         </View>
         {userType === 'user' && (
           <TouchableOpacity
             style={styles.whishlistIconView}
-            onPress={handleWishlist}>
+            onPress={handleWishlist}
+            hitSlop={8}>
             <FastImage
               source={
                 isLiked
@@ -65,15 +74,14 @@ const MerchandiseProductItem = ({
           </TouchableOpacity>
         )}
       </View>
-      <Text style={styles.price}>
-        £
-        {item?.variants && item?.variants?.length > 0
-          ? Math.min(...item.variants.map(variant => variant.price))
-          : item?.price}
-      </Text>
       <Text style={styles.title} numberOfLines={1}>
         {item.productName}
       </Text>
+      {item?.category ? (
+        <View style={styles.tag}>
+          <Text style={styles.tagText}>{item.category}</Text>
+        </View>
+      ) : null}
     </TouchableOpacity>
   );
 };
@@ -81,63 +89,73 @@ const MerchandiseProductItem = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    borderRadius: 20,
-    backgroundColor: 'transparent',
-    marginBottom: 10,
-    alignSelf: 'center',
-    marginHorizontal: 10,
+    marginBottom: 16,
   },
   imageWrapper: {
     position: 'relative',
-    borderRadius: 16,
+    borderRadius: 12,
     overflow: 'hidden',
-    marginBottom: 12,
+    marginBottom: 10,
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   image: {
     width: '100%',
-    height: 250,
-    borderRadius: 16,
+    height: 215,
+    borderRadius: 12,
   },
-  badge: {
+  pricePill: {
     position: 'absolute',
-    left: 12,
-    bottom: 12,
-    backgroundColor: 'rgba(80,80,80,0.7)',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-  },
-  badgeText: {
-    color: Colors.white,
-    fontSize: fontSize.f10,
-    fontFamily: fonts['Poppins-Medium'],
+    left: 7,
+    bottom: 10,
+    minHeight: 20,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    backgroundColor: 'rgba(0,0,0,0.72)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   price: {
-    fontSize: fontSize.f16,
-    fontFamily: fonts['Poppins-Bold'],
+    fontSize: fontSize.f12,
+    fontFamily: fonts['Poppins-SemiBold'],
     color: Colors.white,
+    includeFontPadding: false,
+  },
+  tag: {
+    alignSelf: 'flex-start',
+    height: 23,
+    paddingHorizontal: 10,
+    borderRadius: 11.5,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  tagText: {
+    color: '#EEEEEE',
+    fontSize: fontSize.f10,
+    fontFamily: fonts['Poppins-Medium'],
+    includeFontPadding: false,
   },
   title: {
     fontSize: fontSize.f14,
     fontFamily: fonts['Poppins-Medium'],
-    color: '#CCCCCC',
-    marginTop: 2,
+    color: '#B0AFB6',
   },
   whishlistIconView: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    right: 8,
+    bottom: 8,
     backgroundColor: Colors.white,
-    borderRadius: 20,
-    width: 36,
-    height: 36,
+    borderRadius: 12.5,
+    width: 25,
+    height: 25,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 2,
   },
   whishlistIcon: {
-    width: 20,
-    height: 20,
+    width: 14,
+    height: 14,
   },
 });
 

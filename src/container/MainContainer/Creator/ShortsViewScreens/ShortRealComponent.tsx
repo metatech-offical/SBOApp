@@ -41,6 +41,7 @@ import {fontSize} from '@constant/fontSize';
 import {useToastMessage} from '@hooks/useToastMessage';
 import {navigate} from '@navigation/utils';
 import {BackArrow} from '@assets/svg/AuthFlowIcons';
+import {isDummyReelId} from '@utils/dummyVideos';
 const {width, height} = Dimensions.get('window');
 const ShortRealComponent = ({
   item,
@@ -50,6 +51,10 @@ const ShortRealComponent = ({
   onCommentCountChange,
   onDeleteSuccess,
   reel_height,
+  showBackButton = true,
+  contentType = 'shorts',
+  overlayBottom = 0,
+  videoResizeMode = 'contain',
 }: any) => {
   const {showError, showSuccess} = useToastMessage();
   const {user} = useAppSelector((state: RootState) => state.user);
@@ -80,6 +85,7 @@ const ShortRealComponent = ({
   const [notIntrestReq] = useNotInterestedMutation();
   const [deleteShorts, {isLoading: isDeletingShorts}] =
     useDeleteShortsMutation();
+  const isDummyItem = isDummyReelId(item?._id);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
@@ -110,6 +116,10 @@ const ShortRealComponent = ({
   }, [navigation]);
 
   const handleFollowToggle = async () => {
+    if (isDummyItem) {
+      setFollowing((prev: boolean) => !prev);
+      return;
+    }
     try {
       const payload = {targetUserId: item?.creator?._id};
       await followAndUnfollow(payload).then((res: any) => {
@@ -173,10 +183,13 @@ const ShortRealComponent = ({
       const prevNumberLiked = numberLiked;
       setLike(!prevLike);
       setNumberLiked(prevLike ? prevNumberLiked - 1 : prevNumberLiked + 1);
+      if (isDummyItem) {
+        return;
+      }
       try {
         const res = await likeShortsReq({
           content_id: short_id,
-          contentType: 'shorts',
+          contentType,
         }).unwrap();
       } catch (error) {
         console.error('Error liking shorts:', error);
@@ -184,7 +197,7 @@ const ShortRealComponent = ({
         setNumberLiked(prevNumberLiked);
       }
     },
-    [like, numberLiked, likeShortsReq],
+    [like, numberLiked, likeShortsReq, isDummyItem, contentType],
   );
   const onLikePress = (id: string) => {
     handleLikePress(id);
@@ -210,9 +223,13 @@ const ShortRealComponent = ({
   };
   const handleNotInterestedShorts = async () => {
     const contentId = item?._id || '';
+    if (isDummyItem) {
+      setModalVisible(false);
+      return;
+    }
     const body = {
       contentId: contentId,
-      contentType: 'shorts',
+      contentType,
     };
     await notIntrestReq(body).then(res => {
       if (res?.data) {
@@ -228,7 +245,7 @@ const ShortRealComponent = ({
   const handleReportPress = async (topic: string) => {
     const body = {
       contentId: item?._id || '',
-      contentType: 'shorts',
+      contentType,
       reason: topic,
       description: 'test',
     };
@@ -246,9 +263,15 @@ const ShortRealComponent = ({
     });
   };
   const handleSaveUnsaveContent = async () => {
+    if (isDummyItem) {
+      setModalVisible(false);
+      setIsSaved(!isSaved);
+      showSuccess(isSaved ? 'Unsaved' : 'Saved');
+      return;
+    }
     const res = await saveUnsaveContent({
       content_id: item?._id,
-      contentType: 'shorts',
+      contentType,
       action: isSaved ? 'unsave' : 'save',
     });
     if (res?.data) {
@@ -261,10 +284,13 @@ const ShortRealComponent = ({
     }
   };
   const handleViewContent = async () => {
+    if (isDummyItem) {
+      return;
+    }
     try {
       const res = await viewContent({
         contentId: item?._id,
-        contentType: 'shorts',
+        contentType,
       }).unwrap();
     } catch (error) {
       console.error('Error viewing content:', error);
@@ -278,6 +304,9 @@ const ShortRealComponent = ({
 
   const handleViewProfile = () => {
     setPause(true);
+    if (isDummyItem) {
+      return;
+    }
     if (user?._id === item?.creator?._id) {
       if (user?.membership === 'creator') {
         navigation.navigate('HomeScreen', {
@@ -310,7 +339,7 @@ const ShortRealComponent = ({
           ref={videoRef}
           source={{uri: item?.videoUrl}}
           style={[styles.videoStyle, {height: reel_height}]}
-          resizeMode={'contain'}
+          resizeMode={videoResizeMode}
           repeat={true}
           controls={false}
           paused={!isFocused || appStateVisible !== 'active' || isPause}
@@ -329,12 +358,14 @@ const ShortRealComponent = ({
             justifyContent: 'flex-start',
             flexDirection: 'row',
           }}>
-          <TouchableOpacity
-            hitSlop={20}
-            onPress={handleBackPress}
-            style={styles.icon}>
-            <BackArrow color={'white'} height={24} width={23} hitSlop={20} />
-          </TouchableOpacity>
+          {showBackButton ? (
+            <TouchableOpacity
+              hitSlop={20}
+              onPress={handleBackPress}
+              style={styles.icon}>
+              <BackArrow color={'white'} height={24} width={23} hitSlop={20} />
+            </TouchableOpacity>
+          ) : null}
           <TouchableOpacity onPress={handleViewProfile} style={styles.left}>
             <FastImage
               source={
@@ -345,7 +376,10 @@ const ShortRealComponent = ({
               style={styles.avatar}
             />
             <Text style={styles.userNameStyle} ellipsizeMode="tail">
-              {item?.creator?.username}
+              {item?.creator?.username ||
+                item?.creator?.userName ||
+                item?.username ||
+                ''}
             </Text>
           </TouchableOpacity>
           {item?.creator?._id !== user?._id && (
@@ -363,7 +397,7 @@ const ShortRealComponent = ({
         </TouchableOpacity>
       </View>
       {!isOpenSheet && (
-        <View style={styles.likeContainer}>
+        <View style={[styles.likeContainer, {bottom: 80 + overlayBottom}]}>
           <TouchableOpacity
             style={styles.center}
             onPress={() => onLikePress(item?._id)}>
@@ -394,7 +428,7 @@ const ShortRealComponent = ({
               stroke={'#ffffff'}
               strokeWidth={1.75556}
             />
-            <Text style={styles.name}>{item?.commentsCount || 0}</Text>
+            <Text style={styles.name}>{numberComment || 0}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.center}>
             <ShortsShareIcon height={30} width={30} fill={'transparent'} />
@@ -404,9 +438,11 @@ const ShortRealComponent = ({
       )}
       {/* Caption and Tags */}
       {!isOpenSheet && (
-        <View style={styles.captionContainer}>
+        <View style={[styles.captionContainer, {bottom: overlayBottom}]}>
           <View style={styles.captionRow}>
-            <Text style={styles.description}>{item?.description}</Text>
+            <Text style={styles.description}>
+              {item?.description || item?.title || ''}
+            </Text>
             {item?.tags && item?.tags.length > 0 && (
               <Text style={styles.tags}>
                 {item.tags.map((tag: any) => `#${tag}`).join(' ')}

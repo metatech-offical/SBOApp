@@ -1,6 +1,6 @@
 import {FlatList, StyleSheet, View, Text, TouchableOpacity} from 'react-native';
 import React, {useState, useCallback, useEffect} from 'react';
-import AnimatedBackground from '@components/AnimationComponent/AnimationBackground';
+import GlowBackground from '@components/AnimationComponent/GlowBackground';
 import StackHeader from '@components/CustomHeaders/StackHeader';
 import {navigateBack} from '@navigation/utils';
 import {UserIcon} from '@assets/svg/CommonIcons';
@@ -19,6 +19,11 @@ import {SubscriptionTabs} from '@utils/data';
 import CustomRefreshControler from '@components/CustomLoader/CustomRefreshControler';
 import SubscriberItem from '@components/ScreenLayouts/Home/SubscriberItem';
 import {useToastMessage} from '@hooks/useToastMessage';
+import {
+  DUMMY_SUBSCRIBED_CREATORS,
+  DUMMY_SUBSCRIBERS,
+  isDummyHomeId,
+} from '@utils/dummyHome';
 
 type TabType = 'subscribed' | 'subscribers';
 
@@ -59,41 +64,41 @@ export default function Subscriptions() {
     sort: 'desc',
   });
 
-  // Update creators data when response changes
   React.useEffect(() => {
-    if (creatorsResponse?.data?.data) {
-      if (creatorsPage === 1) {
-        // First page - replace data
-        setCreatorsData(creatorsResponse.data.data);
-      } else {
-        // Subsequent pages - append data
-        setCreatorsData(prev => [...prev, ...creatorsResponse.data.data]);
-      }
-
-      // Check if there are more pages
-      const total = creatorsResponse.data.total || 0;
-      const currentTotal =
-        creatorsData.length + creatorsResponse.data.data.length;
-      setCreatorsHasMore(currentTotal < total);
+    const next = creatorsResponse?.data?.data;
+    if (!next) {
+      return;
     }
+    if (creatorsPage === 1) {
+      const seeded = next.length > 0 ? next : DUMMY_SUBSCRIBED_CREATORS;
+      setCreatorsData(seeded);
+      setCreatorsHasMore(
+        next.length > 0 && seeded.length < (creatorsResponse.data.total || 0),
+      );
+      return;
+    }
+    setCreatorsData(prev => [...prev, ...next]);
+    const total = creatorsResponse.data.total || 0;
+    setCreatorsHasMore(creatorsData.length + next.length < total);
   }, [creatorsResponse?.data]);
 
   useEffect(() => {
-    if (subscribersResponse?.data?.data) {
-      if (subscribersPage === 1) {
-        // First page - replace data
-        setSubscribersData(subscribersResponse.data.data);
-      } else {
-        // Subsequent pages - append data
-        setSubscribersData(prev => [...prev, ...subscribersResponse.data.data]);
-      }
-
-      // Check if there are more pages
-      const total = subscribersResponse.data.total || 0;
-      const currentTotal =
-        subscribersData.length + subscribersResponse.data.data.length;
-      setSubscribersHasMore(currentTotal < total);
+    const next = subscribersResponse?.data?.data;
+    if (!next) {
+      return;
     }
+    if (subscribersPage === 1) {
+      const seeded = next.length > 0 ? next : DUMMY_SUBSCRIBERS;
+      setSubscribersData(seeded);
+      setSubscribersHasMore(
+        next.length > 0 &&
+          seeded.length < (subscribersResponse.data.total || 0),
+      );
+      return;
+    }
+    setSubscribersData(prev => [...prev, ...next]);
+    const total = subscribersResponse.data.total || 0;
+    setSubscribersHasMore(subscribersData.length + next.length < total);
   }, [subscribersResponse?.data]);
 
   // Reset pagination when tab changes
@@ -110,6 +115,10 @@ export default function Subscriptions() {
   }, [activeTab]);
 
   const handleUnsubscribe = (creatorId: string) => {
+    if (isDummyHomeId(creatorId)) {
+      setCreatorsData(prev => prev.filter(item => item._id !== creatorId));
+      return;
+    }
     unsubscribe({creatorId})
       .unwrap()
       .then(() => {
@@ -173,17 +182,22 @@ export default function Subscriptions() {
     activeTab === 'subscribed' ? creatorsLoading : subscribersLoading;
   const isFetching =
     activeTab === 'subscribed' ? creatorsFetching : subscribersFetching;
+  const displayCreators =
+    creatorsData.length > 0 || creatorsLoading
+      ? creatorsData
+      : DUMMY_SUBSCRIBED_CREATORS;
+  const displaySubscribers =
+    subscribersData.length > 0 || subscribersLoading
+      ? subscribersData
+      : DUMMY_SUBSCRIBERS;
   const totalCount =
     activeTab === 'subscribed'
-      ? creatorsResponse?.data?.total || 0
-      : subscribersResponse?.data?.total || 0;
+      ? creatorsResponse?.data?.total || displayCreators.length
+      : subscribersResponse?.data?.total || displaySubscribers.length;
 
   return (
     <View style={styles.container}>
-      <AnimatedBackground
-        animationSource={require('@assets/animations/AuthAnimation4.json')}
-        zIndex={0}
-      />
+      <GlowBackground />
       <StackHeader
         onBackPress={() => navigateBack()}
         title="Subscriptions"
@@ -203,7 +217,7 @@ export default function Subscriptions() {
 
       {activeTab === 'subscribed' ? (
         <FlatList
-          data={creatorsData}
+          data={displayCreators}
           keyExtractor={item => item?._id}
           renderItem={renderCreatorItem}
           ListEmptyComponent={!isLoading ? <NodataFound /> : null}
@@ -226,7 +240,7 @@ export default function Subscriptions() {
         />
       ) : (
         <FlatList
-          data={subscribersData}
+          data={displaySubscribers}
           keyExtractor={item => item?._id}
           renderItem={renderSubscriberItem}
           ListEmptyComponent={!isLoading ? <NodataFound /> : null}

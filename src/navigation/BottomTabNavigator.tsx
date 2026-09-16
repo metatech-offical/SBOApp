@@ -2,7 +2,7 @@ import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {useAppSelector} from '@store/index';
 import {RootState} from '@store/index';
-import {Image, ImageStyle, Platform, View} from 'react-native';
+import {Image, ImageStyle, Platform, Text, View} from 'react-native';
 import AddPlusButton from '@components/VideosComponent/AddPlusButton';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
@@ -33,7 +33,7 @@ import UserProfile from '@container/MainContainer/User/UserProfile';
 import {CreatorBottomTabParamList, UserBottomTabParamList} from './screens';
 import {fonts} from '@constant/fontfamily';
 import {Colors} from '@constant/colors';
-import {fontSize} from '@constant/fontSize';
+import {fontSize, width} from '@constant/fontSize';
 
 const CreatorTab = createBottomTabNavigator<CreatorBottomTabParamList>();
 const UserTab = createBottomTabNavigator<UserBottomTabParamList>();
@@ -45,6 +45,30 @@ const getTabIcon =
 
 const defaultIconStyle = {width: 24, height: 24};
 const ticketIconStyle = {width: 20, height: 20, resizeMode: 'contain' as const};
+
+const TAB_LABEL_WIDTH = width / 6 - 2;
+
+const getTabLabel =
+  (label: string) =>
+  ({color}: {color: string}) =>
+    (
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.65}
+        allowFontScaling={false}
+        style={{
+          color,
+          width: TAB_LABEL_WIDTH,
+          fontSize: fontSize.f8,
+          fontFamily: fonts['Poppins-Regular'],
+          textAlign: 'center',
+          includeFontPadding: false,
+          letterSpacing: -0.3,
+        }}>
+        {label}
+      </Text>
+    );
 
 const useTabBarStyle = () => {
   const insets = useSafeAreaInsets();
@@ -77,6 +101,9 @@ function CreatorBottomTabNavigator() {
           tabBarStyle,
           tabBarActiveTintColor: Colors.white,
           tabBarInactiveTintColor: '#666',
+          tabBarItemStyle: {
+            paddingHorizontal: 0,
+          },
           tabBarLabelStyle: {
             fontSize: fontSize.f8,
             fontFamily: fonts['Poppins-Regular'],
@@ -86,7 +113,7 @@ function CreatorBottomTabNavigator() {
           name="CreatorHome"
           component={CreatorHome}
           options={{
-            tabBarLabel: 'Home',
+            tabBarLabel: getTabLabel('Home'),
             tabBarIcon: getTabIcon(homeIcon, defaultIconStyle),
           }}
         />
@@ -94,7 +121,7 @@ function CreatorBottomTabNavigator() {
           name="CreatorTicketing"
           component={CreatorTicketing}
           options={{
-            tabBarLabel: 'Ticketing',
+            tabBarLabel: getTabLabel('Ticketing'),
             tabBarIcon: getTabIcon(ticketsIcon, ticketIconStyle),
           }}
         />
@@ -102,7 +129,7 @@ function CreatorBottomTabNavigator() {
           name="CreatorVideos"
           component={CreatorVideos}
           options={{
-            tabBarLabel: 'Videos',
+            tabBarLabel: getTabLabel('Videos'),
             tabBarIcon: getTabIcon(videos, defaultIconStyle),
           }}
         />
@@ -110,7 +137,7 @@ function CreatorBottomTabNavigator() {
           name="CreatorStore"
           component={CreatorStore}
           options={{
-            tabBarLabel: 'Store',
+            tabBarLabel: getTabLabel('Merchandise'),
             tabBarIcon: getTabIcon(merchandiseIcon, defaultIconStyle),
           }}
         />
@@ -118,7 +145,7 @@ function CreatorBottomTabNavigator() {
           name="CreatorExplore"
           component={CreatorExplore}
           options={{
-            tabBarLabel: 'Explore',
+            tabBarLabel: getTabLabel('Explore'),
             tabBarIcon: getTabIcon(searchIcon, defaultIconStyle),
           }}
         />
@@ -126,7 +153,7 @@ function CreatorBottomTabNavigator() {
           name="CreatorProfile"
           component={CreatorProfile}
           options={{
-            tabBarLabel: 'Profile',
+            tabBarLabel: getTabLabel('Profile'),
             tabBarIcon: getTabIcon(profileIcon, defaultIconStyle),
           }}
         />
@@ -146,6 +173,9 @@ function UserBottomTabNavigator() {
         tabBarStyle,
         tabBarActiveTintColor: Colors.white,
         tabBarInactiveTintColor: '#666',
+        tabBarItemStyle: {
+          paddingHorizontal: 0,
+        },
         tabBarLabelStyle: {
           fontSize: fontSize.f8,
           fontFamily: fonts['Poppins-Regular'],
@@ -155,7 +185,7 @@ function UserBottomTabNavigator() {
         name="UserHome"
         component={UserHome}
         options={{
-          tabBarLabel: 'Home',
+          tabBarLabel: getTabLabel('Home'),
           tabBarIcon: getTabIcon(homeIcon, defaultIconStyle),
         }}
       />
@@ -163,7 +193,7 @@ function UserBottomTabNavigator() {
         name="UserTicketing"
         component={UserTicketing}
         options={{
-          tabBarLabel: 'Ticketing',
+          tabBarLabel: getTabLabel('Ticketing'),
           tabBarIcon: getTabIcon(ticketsIcon, ticketIconStyle),
         }}
       />
@@ -171,7 +201,7 @@ function UserBottomTabNavigator() {
         name="UserVideos"
         component={UserVideos}
         options={{
-          tabBarLabel: 'Videos',
+          tabBarLabel: getTabLabel('Videos'),
           tabBarIcon: getTabIcon(videos, defaultIconStyle),
         }}
       />
@@ -179,7 +209,7 @@ function UserBottomTabNavigator() {
         name="UserMerchandise"
         component={UserMerchandise}
         options={{
-          tabBarLabel: 'Store', //Merchandise
+          tabBarLabel: getTabLabel('Merchandise'),
           tabBarIcon: getTabIcon(merchandiseIcon, defaultIconStyle),
         }}
       />
@@ -187,7 +217,7 @@ function UserBottomTabNavigator() {
         name="UserExplore"
         component={UserExplore}
         options={{
-          tabBarLabel: 'Explore',
+          tabBarLabel: getTabLabel('Explore'),
           tabBarIcon: getTabIcon(searchIcon, defaultIconStyle),
         }}
       />
@@ -195,7 +225,7 @@ function UserBottomTabNavigator() {
         name="UserProfile"
         component={UserProfile}
         options={{
-          tabBarLabel: 'Profile',
+          tabBarLabel: getTabLabel('Profile'),
           tabBarIcon: getTabIcon(profileIcon, defaultIconStyle),
         }}
       />

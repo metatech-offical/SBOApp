@@ -1,7 +1,6 @@
 import {StyleSheet, View} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {UserProfileProps} from '@navigation/screens';
-import AnimatedBackground from '@components/AnimationComponent/AnimationBackground';
 import ProfileHeader from '@components/CustomHeaders/ProfileHeader';
 import ProfileDetail from '@components/ScreenLayouts/ProfileComponent/ProfileDetail';
 import ProfileTabUI from '@components/ScreenLayouts/ProfileComponent/ProfileTabUI';
@@ -10,11 +9,15 @@ import {useSelector} from 'react-redux';
 import {RootState} from '@store/index';
 import {useGetUserProfileByIdQuery} from '@rtkServices/ProfileService';
 import Loader from '@components/CustomLoader/Loader';
-import LinearGradient from 'react-native-linear-gradient';
+import GlowBackground from '@components/AnimationComponent/GlowBackground';
+import BlurView from '@components/CustomBlurView/BlurView';
+import {ScrollView} from 'react-native-gesture-handler';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const UserProfile = ({navigation}: UserProfileProps) => {
   const {user} = useSelector((state: RootState) => state.user);
   const [profileData, setProfileData] = useState<UserProfile | null>(null);
+  const insets = useSafeAreaInsets();
 
   const {data, isLoading} = useGetUserProfileByIdQuery({
     id: user?._id,
@@ -28,11 +31,7 @@ const UserProfile = ({navigation}: UserProfileProps) => {
 
   return (
     <View style={styles.container}>
-      <AnimatedBackground
-        animationSource={require('@assets/animations/AuthAnimation4.json')}
-        backgroundColor={'#1a1538'}
-        zIndex={0}
-      />
+      <GlowBackground />
 
       <View style={styles.contentOverlay}>
         <ProfileHeader
@@ -42,18 +41,32 @@ const UserProfile = ({navigation}: UserProfileProps) => {
         {isLoading ? (
           <Loader visible={isLoading} />
         ) : (
-          <View style={styles.body}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.scrollContent}>
             {profileData && (
-              <ProfileDetail profileType="user" profileData={profileData} />
+              <ProfileDetail
+                profileType="user"
+                profileData={profileData}
+                isOwnProfile
+              />
             )}
             <View style={styles.profileTabContainer}>
-              <LinearGradient
-                colors={['#00000057', 'transparent']}
-                style={styles.linearGradientContainer}
+              <BlurView
+                style={StyleSheet.absoluteFill}
+                blurAmount={12}
+                reducedTransparencyFallbackColor="transparent"
               />
-              <ProfileTabUI profileType="user" />
+              <View style={styles.sheetTint} />
+              <ProfileTabUI
+                profileType="user"
+                userId={user?._id}
+                bottomInset={80 + Math.max(insets.bottom, 10)}
+              />
             </View>
-          </View>
+          </ScrollView>
         )}
       </View>
     </View>
@@ -70,30 +83,20 @@ const styles = StyleSheet.create({
     position: 'relative',
     flex: 1,
   },
-  body: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
   },
   profileTabContainer: {
-    flex: 1,
-    marginTop: 8,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    marginTop: 36,
+    flexGrow: 1,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     overflow: 'hidden',
+    borderTopWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
-  profileTabHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    
-
+  sheetTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.34)',
   },
-
-  linearGradientContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-   
-  }
 });

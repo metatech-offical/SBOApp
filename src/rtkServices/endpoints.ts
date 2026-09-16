@@ -61,6 +61,9 @@ export const ENDPOINTS = {
     getUserProfileById: (id: string) => `user/data/${id}`,
     getUserProfileContentById: (id: string) => `user/profile-content/${id}`,
     updatePlan: 'user/membership',
+    addFavoriteCreator: 'user/favorite-creators',
+    removeFavoriteCreator: (creatorId: string) =>
+      `user/favorite-creators/${creatorId}`,
   },
   store: {
     storeAnalytics: 'store/store-analytics',

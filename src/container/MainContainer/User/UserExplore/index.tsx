@@ -1,4 +1,4 @@
-import {View, Text, TouchableOpacity, StyleSheet, FlatList} from 'react-native';
+import {View, Text, StyleSheet, FlatList} from 'react-native';
 import React, {useState} from 'react';
 import {useFocusEffect} from '@react-navigation/native';
 import {UserExploreProps} from '@navigation/screens';
@@ -15,12 +15,16 @@ import {
   useGetTrendingSearchResultsQuery,
 } from '@rtkServices/SearchService';
 import NodataFound from '@components/DataEmpty/NodataFound';
-import Loader from '@components/CustomLoader/Loader';
 import SugetionList from '@components/ScreenLayouts/Explore/SugetionList';
 import SearchHeader from '@components/CustomHeaders/SearchHeader';
+import {
+  DUMMY_RECENT_SEARCHES,
+  DUMMY_TRENDING_STREAMS,
+  withDummySearchData,
+} from '@utils/dummyVideos';
 
 const UserExplore = ({navigation}: UserExploreProps) => {
-  const {data: trendingSearchResults, isLoading} =
+  const {data: trendingSearchResults} =
     useGetTrendingSearchResultsQuery(undefined, {
       refetchOnMountOrArgChange: true,
       refetchOnFocus: true,
@@ -29,15 +33,19 @@ const UserExplore = ({navigation}: UserExploreProps) => {
 
   const [searchQuery, setSearchQuery] = useState('');
 
-  const {
-    data: searchResults,
-    isLoading: searchLoading,
-    isFetching: searchFetching,
-  } = useGetSearchResultsQuery({search: searchQuery});
+  const {data: searchResults} = useGetSearchResultsQuery({search: searchQuery});
 
   const handleSearchItemPress = (text: string) => {
     setSearchQuery(text);
   };
+
+  const trendingStreams = trendingSearchResults?.data?.streams?.length
+    ? trendingSearchResults.data.streams
+    : DUMMY_TRENDING_STREAMS;
+  const recentSearches = trendingSearchResults?.data?.recentSearches?.length
+    ? trendingSearchResults.data.recentSearches
+    : DUMMY_RECENT_SEARCHES;
+  const suggestionData = withDummySearchData(searchResults?.data, searchQuery);
 
   // Clear search input when user switches away from Explore tab
   useFocusEffect(
@@ -71,16 +79,14 @@ const UserExplore = ({navigation}: UserExploreProps) => {
             });
           }}
         />
-        {isLoading ? (
-          <Loader visible={isLoading} />
-        ) : searchQuery.length > 0 ? (
+        {searchQuery.length > 0 ? (
           <SugetionList
-            data={searchResults?.data || {streams: [], shorts: [], users: []}}
-            isLoading={searchLoading || searchFetching}
+            data={suggestionData}
+            isLoading={false}
           />
         ) : (
           <FlatList
-            data={trendingSearchResults?.data?.streams}
+            data={trendingStreams}
             numColumns={2}
             columnWrapperStyle={{
               gap: 10,
@@ -93,7 +99,7 @@ const UserExplore = ({navigation}: UserExploreProps) => {
             ListHeaderComponent={() => (
               <>
                 <ResentSearchHistory
-                  data={trendingSearchResults?.data?.recentSearches || []}
+                  data={recentSearches}
                   onItemPress={handleSearchItemPress}
                 />
                 <Text style={styles.title}>Trending Searches</Text>

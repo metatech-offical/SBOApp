@@ -421,14 +421,14 @@ export const SearchIcon = (props: SvgProps) => (
     <G clipPath="url(#clip0_876_18522)">
       <Path
         d="M2.0625 7.125C2.0625 7.75699 2.18698 8.38278 2.42883 8.96666C2.67068 9.55054 3.02517 10.0811 3.47205 10.528C3.91893 10.9748 4.44946 11.3293 5.03334 11.5712C5.61722 11.813 6.24301 11.9375 6.875 11.9375C7.50699 11.9375 8.13278 11.813 8.71666 11.5712C9.30054 11.3293 9.83107 10.9748 10.278 10.528C10.7248 10.0811 11.0793 9.55054 11.3212 8.96666C11.563 8.38278 11.6875 7.75699 11.6875 7.125C11.6875 6.49301 11.563 5.86722 11.3212 5.28334C11.0793 4.69946 10.7248 4.16893 10.278 3.72205C9.83107 3.27517 9.30054 2.92068 8.71666 2.67883C8.13278 2.43698 7.50699 2.3125 6.875 2.3125C6.24301 2.3125 5.61722 2.43698 5.03334 2.67883C4.44946 2.92068 3.91893 3.27517 3.47205 3.72205C3.02517 4.16893 2.67068 4.69946 2.42883 5.28334C2.18698 5.86722 2.0625 6.49301 2.0625 7.125Z"
-        stroke="rgb(168, 168, 168)"
+        stroke={props.stroke || 'rgb(168, 168, 168)'}
         strokeWidth={1.2375}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <Path
         d="M14.4375 14.6875L10.3125 10.5625"
-        stroke="rgb(168, 168, 168)"
+        stroke={props.stroke || 'rgb(168, 168, 168)'}
         strokeWidth={1.2375}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -554,6 +554,132 @@ export const NotificationActivityIcon = (props: SvgProps) => (
       rx={4}
       stroke={props?.color || 'white'}
       strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const CreatorCrownIcon = (props: SvgProps) => (
+  <Svg width={12} height={11} viewBox="232.08 27.45 10.84 10.09" fill="none" {...props}>
+    <Path
+      d="M242.714 28.5356C242.585 28.3754 242.409 28.2598 242.21 28.2052C242.02 28.1552 241.819 28.1642 241.634 28.2309C241.449 28.2977 241.289 28.4191 241.175 28.579L239.787 29.9174L238.346 27.9501C238.263 27.8096 238.148 27.6908 238.01 27.6034C237.899 27.5357 237.776 27.4909 237.648 27.4716C237.52 27.4524 237.389 27.4592 237.264 27.4915C237.139 27.5239 237.021 27.5811 236.918 27.6599C236.815 27.7387 236.729 27.8374 236.665 27.9501L235.223 29.9174L233.836 28.579C233.721 28.4202 233.561 28.2998 233.376 28.2332C233.191 28.1665 232.991 28.1568 232.801 28.2052C232.59 28.2625 232.404 28.3894 232.275 28.5654C232.145 28.7414 232.078 28.9562 232.086 29.1748L232.947 35.2404C233.027 35.8751 233.337 36.4587 233.817 36.8817C234.297 37.3047 234.915 37.5381 235.554 37.5381H239.494C240.135 37.5392 240.754 37.3062 241.235 36.8832C241.716 36.4601 242.026 35.8759 242.107 35.2404L242.915 29.1699C242.917 29.1483 242.917 29.1265 242.915 29.1049C242.91 28.8987 242.839 28.6994 242.714 28.5356ZM239.695 35.4354H235.359C235.288 35.4354 235.218 35.4214 235.152 35.3941C235.086 35.3669 235.026 35.327 234.976 35.2767C234.926 35.2263 234.886 35.1666 234.859 35.1008C234.831 35.0351 234.817 34.9646 234.817 34.8934C234.817 34.8223 234.831 34.7518 234.859 34.6861C234.886 34.6203 234.926 34.5606 234.976 34.5102C235.026 34.4599 235.086 34.42 235.152 34.3928C235.218 34.3655 235.288 34.3515 235.359 34.3515H239.695C239.839 34.3515 239.977 34.4086 240.078 34.5102C240.18 34.6117 240.237 34.7495 240.237 34.8932C240.237 35.0368 240.18 35.1746 240.078 35.2762C239.977 35.3778 239.839 35.4354 239.695 35.4354Z"
+      fill={props.fill || '#1AD655'}
+    />
+  </Svg>
+);
+
+export const HomeChevronIcon = (props: SvgProps) => (
+  <Svg width={8} height={14} viewBox="0 0 8 14" fill="none" {...props}>
+    <Path
+      d="M1 1L7 7L1 13"
+      stroke={props.stroke || 'white'}
+      strokeOpacity={props.strokeOpacity ?? 0.43}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const ChevronDownSmallIcon = (props: SvgProps) => (
+  <Svg width={10} height={6} viewBox="0 0 9 5" fill="none" {...props}>
+    <Path
+      d="M0 0.75L4.5 5.25L9 0.75"
+      stroke={props.stroke || 'white'}
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const ShoppingBagIcon = (props: SvgProps) => (
+  <Svg width={26} height={26} viewBox="0 0 24 24" fill="none" {...props}>
+    <Path
+      d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"
+      stroke={props.stroke || 'white'}
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M3 6h18"
+      stroke={props.stroke || 'white'}
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M16 10a4 4 0 0 1-8 0"
+      stroke={props.stroke || 'white'}
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const UsersGroupIcon = (props: SvgProps) => (
+  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" {...props}>
+    <Path
+      d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+      stroke={props.stroke || 'white'}
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"
+      stroke={props.stroke || 'white'}
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M22 21v-2a4 4 0 0 0-3-3.87"
+      stroke={props.stroke || 'white'}
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M16 3.13a4 4 0 0 1 0 7.75"
+      stroke={props.stroke || 'white'}
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const PackageIcon = (props: SvgProps) => (
+  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" {...props}>
+    <Path
+      d="m7.5 4.27 9 5.15"
+      stroke={props.stroke || 'white'}
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"
+      stroke={props.stroke || 'white'}
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="m3.3 7 8.7 5 8.7-5"
+      stroke={props.stroke || 'white'}
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M12 22V12"
+      stroke={props.stroke || 'white'}
+      strokeWidth={1.75}
       strokeLinecap="round"
       strokeLinejoin="round"
     />

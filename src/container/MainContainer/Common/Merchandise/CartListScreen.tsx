@@ -23,6 +23,7 @@ import {RootState} from '@store/index';
 import {setCartCount} from '@store/Cart';
 import {fontSize} from '@constant/fontSize';
 import {fonts} from '@constant/fontfamily';
+import {DUMMY_CART_ITEMS} from '@utils/dummyMerchandise';
 
 const CartListScreen = ({navigation}: CartListScreenProps) => {
   const dispatch = useDispatch();
@@ -64,6 +65,12 @@ const CartListScreen = ({navigation}: CartListScreenProps) => {
     refetch();
   };
 
+  const displayCart = cartList?.length ? cartList : DUMMY_CART_ITEMS;
+  const dummyTotal = DUMMY_CART_ITEMS.reduce(
+    (sum, item) => sum + item.variant.price * item.quantity,
+    0,
+  );
+
   return (
     <View style={styles.container}>
       <AnimatedBackground
@@ -87,7 +94,7 @@ const CartListScreen = ({navigation}: CartListScreenProps) => {
         ) : (
           <View>
             <FlatList
-              data={cartList || []}
+              data={displayCart}
               keyExtractor={item => item?.productId?._id}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{flexGrow: 1, paddingBottom: 100}}
@@ -119,12 +126,12 @@ const CartListScreen = ({navigation}: CartListScreenProps) => {
         )}
       </View>
 
-      {cartList && cartList?.length > 0 && (
+      {displayCart.length > 0 && (
         <View style={styles.footerContainer}>
           <View style={styles.totalContainer}>
             <Text style={styles.totalText}>Total Amount</Text>
             <Text style={styles.totalText}>
-              ${cartListData?.data?.totalPrice}
+              ${cartList?.length ? cartListData?.data?.totalPrice : dummyTotal}
             </Text>
           </View>
 
@@ -132,7 +139,7 @@ const CartListScreen = ({navigation}: CartListScreenProps) => {
             text="Proceed to buy"
             onPress={() =>
               navigation.navigate('CheckoutScreen', {
-                cartData: cartList || [],
+                cartData: displayCart,
                 screenType: 'from_cart',
               })
             }

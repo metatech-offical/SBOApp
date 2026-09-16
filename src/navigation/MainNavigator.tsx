@@ -390,7 +390,10 @@ export default function MainNavigator() {
 
       <MainStack.Screen
         name={'FavoriteCreatorList'}
-        options={{headerShown: false}}
+        options={{
+          headerShown: false,
+          contentStyle: {backgroundColor: '#100E12'},
+        }}
         component={FavoriteCreatorList}
       />
       <MainStack.Screen

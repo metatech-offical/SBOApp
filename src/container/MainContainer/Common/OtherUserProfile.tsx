@@ -8,6 +8,10 @@ import {
 import React, {useEffect, useCallback, useMemo, useState, useRef} from 'react';
 import {OtherUserProfileProps} from '@navigation/screens';
 import AnimatedBackground from '@components/AnimationComponent/AnimationBackground';
+import GlowBackground from '@components/AnimationComponent/GlowBackground';
+import BlurView from '@components/CustomBlurView/BlurView';
+import {ScrollView} from 'react-native-gesture-handler';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import ProfileHeader from '@components/CustomHeaders/ProfileHeader';
 import ProfileDetail from '@components/ScreenLayouts/ProfileComponent/ProfileDetail';
 import ProfileTabUI from '@components/ScreenLayouts/ProfileComponent/ProfileTabUI';
@@ -35,9 +39,8 @@ import UserBlockSheet from './UserBlockSheet';
 import NewCommentSheet from '@components/Common/NewCommentSheet';
 import {useGetLiveByUserIDQuery} from '@rtkServices/LiveStreamServices';
 import {useToastMessage} from '@hooks/useToastMessage';
-import {Colors} from '@constant/colors';
-import {fonts} from '@constant/fontfamily';
 import CustomRadioButton from '@components/CustomRadioButton/CustomRadioButton';
+import {fonts} from '@constant/fontfamily';
 import {shareProfile} from '@utils/helper';
 
 const OtherUserProfile = ({navigation, route}: OtherUserProfileProps) => {
@@ -246,13 +249,21 @@ const OtherUserProfile = ({navigation, route}: OtherUserProfileProps) => {
     }, 500);
   };
 
+  const insets = useSafeAreaInsets();
+  const isUserLayout = (data?.data ?? profileData)?.membership !== 'creator';
+  const isOwnProfile = user?._id === profileData?._id;
+
   return (
     <View style={styles.container}>
-      <AnimatedBackground
-        animationSource={require('@assets/animations/AuthAnimation4.json')}
-        backgroundColor={'#1a1538'}
-        zIndex={0}
-      />
+      {isUserLayout ? (
+        <GlowBackground />
+      ) : (
+        <AnimatedBackground
+          animationSource={require('@assets/animations/AuthAnimation4.json')}
+          backgroundColor={'#1a1538'}
+          zIndex={0}
+        />
+      )}
       <View style={styles.contentOverlay}>
         <ProfileHeader
           onBackPress={() => navigation.goBack()}
@@ -263,6 +274,38 @@ const OtherUserProfile = ({navigation, route}: OtherUserProfileProps) => {
         />
         {isProfileLoading ? (
           <Loader visible={isProfileLoading} />
+        ) : isUserLayout ? (
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.scrollContent}>
+            {profileData && (
+              <ProfileDetail
+                profileData={profileData}
+                liveData={liveData?.data}
+                isBlocked={isBlocked}
+                profileType="user"
+                isOwnProfile={isOwnProfile}
+              />
+            )}
+            {!isBlocked && (
+              <View style={styles.userSheet}>
+                <BlurView
+                  style={StyleSheet.absoluteFill}
+                  blurAmount={12}
+                  reducedTransparencyFallbackColor="transparent"
+                />
+                <View style={styles.sheetTint} />
+                <ProfileTabUI
+                  profileType="user"
+                  userId={userId}
+                  handleCommentPress={handleCommentPress}
+                  bottomInset={Math.max(insets.bottom, 10)}
+                />
+              </View>
+            )}
+          </ScrollView>
         ) : (
           <View style={styles.body}>
             {profileData && (
@@ -270,9 +313,7 @@ const OtherUserProfile = ({navigation, route}: OtherUserProfileProps) => {
                 profileData={profileData}
                 liveData={liveData?.data}
                 isBlocked={isBlocked}
-                profileType={
-                  profileData?.membership === 'creator' ? 'other' : 'user'
-                }
+                profileType="other"
               />
             )}
             {!isBlocked && (
@@ -335,11 +376,26 @@ export default OtherUserProfile;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.red,
   },
   contentOverlay: {
     position: 'relative',
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  userSheet: {
+    marginTop: 36,
+    flexGrow: 1,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    overflow: 'hidden',
+    borderTopWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  sheetTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.34)',
   },
   body: {
     flex: 1,

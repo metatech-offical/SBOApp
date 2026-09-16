@@ -1,4 +1,4 @@
-import AnimationBackground from '@components/AnimationComponent/AnimationBackground';
+import GlowBackground from '@components/AnimationComponent/GlowBackground';
 import SettingHeader from '@components/CustomHeaders/SettingHeader';
 import NodataFound from '@components/DataEmpty/NodataFound';
 import {WishlistScreenProps} from '@navigation/screens';
@@ -6,19 +6,18 @@ import {View, StyleSheet, FlatList} from 'react-native';
 import WishlistAndOrderCard from '@components/ScreenLayouts/SettingsComponent/WishlistAndOrderCard';
 import {useGetWishlistQuery} from '@rtkServices/CreatorStoreService';
 import Loader from '@components/CustomLoader/Loader';
+import {DUMMY_WISHLIST_PRODUCTS} from '@utils/dummyHome';
 
 const WishlistScreen = ({navigation}: WishlistScreenProps) => {
   const {data: wishlist, isLoading} = useGetWishlistQuery(null, {
     skip: false,
   });
-  const wishlistData = wishlist?.data?.products || [];
+  const apiWishlist = wishlist?.data?.products || [];
+  const wishlistData =
+    apiWishlist.length > 0 ? apiWishlist : DUMMY_WISHLIST_PRODUCTS;
   return (
     <View style={styles.container}>
-      <AnimationBackground
-        animationSource={require('@assets/animations/AuthAnimation4.json')}
-        backgroundColor={'#1a1538'}
-        zIndex={0}
-      />
+      <GlowBackground />
       <View style={styles.contentOverlay}>
         <SettingHeader
           title="Wishlist"

@@ -73,7 +73,7 @@ export const creatorTabs = [
 export const creatorActionData = [
   {
     id: 1,
-    title: 'Create new event',
+    title: 'Create new\nevent',
     screen: 'CreateEvent',
   },
   {
@@ -83,14 +83,9 @@ export const creatorActionData = [
   },
   {
     id: 3,
-    title: 'Create a new post',
+    title: 'Create a new\npost',
     screen: 'PostUploadScreen',
   },
-  // {
-  //   id: 4,
-  //   title: 'My earnings',
-  //   screen: 'MyEarnings',
-  // },
   {
     id: 5,
     title: 'Manage Orders',
@@ -821,6 +816,21 @@ export const UploadCategoryData = [
   {name: 'Current Affairs'},
   {name: 'Healthcare'},
   {name: 'Podcasts'},
+  {name: 'Entertainment'},
+];
+export const VideoCategoryData = [
+  {name: 'Music'},
+  {name: 'Movies'},
+  {name: 'Theater'},
+  {name: 'Television'},
+  {name: 'Video Games'},
+  {name: 'Books'},
+  {name: 'Podcasts'},
+  {name: 'Sports'},
+  {name: 'Comedy'},
+  {name: 'Drama'},
+  {name: 'Ancient'},
+  {name: 'Legal'},
   {name: 'Entertainment'},
 ];
 export const ProductCategoryData = [

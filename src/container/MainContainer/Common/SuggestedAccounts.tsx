@@ -15,12 +15,13 @@ import {useUserSuggestedAccountQuery} from '@rtkServices/HomeService';
 import {navigate, navigateBack} from '@navigation/utils';
 import Loader from '@components/CustomLoader/Loader';
 import NodataFound from '@components/DataEmpty/NodataFound';
-import AnimationBackground from '@components/AnimationComponent/AnimationBackground';
+import GlowBackground from '@components/AnimationComponent/GlowBackground';
 import StackHeader from '@components/CustomHeaders/StackHeader';
 import {UserIcon} from '@assets/svg/CommonIcons';
 import CustomRefreshControler from '@components/CustomLoader/CustomRefreshControler';
 import {useUnsubscribeFromCreatorMutation} from '@rtkServices/SubcriptionService';
 import {useToastMessage} from '@hooks/useToastMessage';
+import {DUMMY_SUGGESTED_ACCOUNTS} from '@utils/dummyHome';
 
 const SuggestedAccountItem = ({
   item,
@@ -80,7 +81,10 @@ export default function SuggestedAccounts() {
   });
 
   const suggestedAccounts = suggestedAccount?.data?.data || [];
-  const totalRecord = suggestedAccount?.data?.pagination?.totalRecords || 0;
+  const totalRecord =
+    suggestedAccounts.length > 0
+      ? suggestedAccount?.data?.pagination?.totalRecords || 0
+      : DUMMY_SUGGESTED_ACCOUNTS.length;
 
   useEffect(() => {
     if (suggestedAccounts?.length > 0) {
@@ -154,11 +158,7 @@ export default function SuggestedAccounts() {
 
   return (
     <View style={styles.container}>
-      <AnimationBackground
-        animationSource={require('@assets/animations/AuthAnimation4.json')}
-        backgroundColor="#1a1538"
-        zIndex={0}
-      />
+      <GlowBackground />
       <StackHeader
         onBackPress={() => navigateBack()}
         title="Subscriptions"
@@ -169,7 +169,11 @@ export default function SuggestedAccounts() {
         showArrowDown={false}
       />
       <FlatList
-        data={localAccounts}
+        data={
+          localAccounts.length > 0
+            ? localAccounts
+            : DUMMY_SUGGESTED_ACCOUNTS
+        }
         refreshControl={
           <CustomRefreshControler
             refreshing={isFetching && creatorsPage === 1}

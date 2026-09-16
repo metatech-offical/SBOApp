@@ -1,10 +1,15 @@
 import {ScrollView, StyleSheet, Text, View} from 'react-native';
 import React from 'react';
-import {fontSize, hp, wp} from '@constant/fontSize';
+import {fontSize} from '@constant/fontSize';
 import {fonts} from '@constant/fontfamily';
 import {Colors} from '@constant/colors';
-import {useHomeStatisticsQuery} from '@rtkServices/HomeService';
-import {OrdersIcon, TicketIcon, VideoIcon} from '@assets/svg/HomeScreenIcon';
+import {
+  HomeChevronIcon,
+  OrdersIcon,
+  TicketIcon,
+  VideoIcon,
+} from '@assets/svg/HomeScreenIcon';
+import {DUMMY_HOME_STATS} from '@utils/dummyHome';
 
 const StaticsCard = ({
   title,
@@ -27,35 +32,61 @@ const StaticsCard = ({
 };
 
 const UserStatics = ({isCreator, data}: {isCreator: boolean; data: any}) => {
-  const staticsData = [
+  const stats = data?.data || {};
+  const hasApiStats =
+    (stats.totalWatchedVideos || 0) +
+      (stats.totalOrders || 0) +
+      (stats.tickets || 0) >
+    0;
+  const values = hasApiStats ? stats : DUMMY_HOME_STATS;
+
+  const creatorStatics = [
     {
-      title: 'Watched Videos',
-      value: data?.data?.totalWatchedVideos || 0,
-      icon: <VideoIcon opacity={0.5} />,
+      title: 'Videos',
+      value: values.totalWatchedVideos || 0,
+      icon: <VideoIcon width={21} height={21} opacity={0.5} />,
     },
     {
       title: 'Total Orders',
-      value: data?.data?.totalOrders || 0,
-      icon: <OrdersIcon opacity={0.5} />,
+      value: values.totalOrders || 0,
+      icon: <OrdersIcon width={15} height={21} opacity={0.5} />,
     },
     {
       title: 'Tickets owned',
-      value: data?.data?.tickets || 0,
-      icon: <TicketIcon opacity={0.5} />,
+      value: values.tickets || 0,
+      icon: <TicketIcon width={21} height={21} opacity={0.5} />,
     },
   ];
-  return (
-    <View style={styles.container}>
-      {isCreator ? (
-        <View style={styles.headerContainer}>
-          <Text style={styles.creatorText}>Today's stats</Text>
-        </View>
-      ) : null}
+
+  if (!isCreator) {
+    return (
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.staticsCardContainer}>
-        {staticsData.map((item, index) => (
+        {creatorStatics.map((item, index) => (
+          <StaticsCard
+            key={index}
+            title={item.title}
+            value={item.value}
+            icon={item.icon}
+          />
+        ))}
+      </ScrollView>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.headerContainer}>
+        <Text style={styles.creatorText}>Today's stats</Text>
+        <HomeChevronIcon strokeOpacity={0.7} />
+      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.staticsCardContainer}>
+        {creatorStatics.map((item, index) => (
           <StaticsCard
             key={index}
             title={item.title}
@@ -72,11 +103,10 @@ export default UserStatics;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    marginTop: 24,
   },
-
   creatorText: {
-    fontSize: fontSize.f20,
+    fontSize: fontSize.f16,
     color: Colors.white,
     fontFamily: fonts['Poppins-SemiBold'],
   },
@@ -84,20 +114,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: wp('4%'),
-    paddingVertical: hp('2'),
+    paddingHorizontal: 16,
+    marginBottom: 24,
   },
   staticsCard: {
-    backgroundColor: '#FFFFFF0F',
-    padding: wp('4'),
-    width: wp('40'),
-    // height: hp('9'),
-    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    width: 150,
+    height: 79,
+    borderRadius: 8,
+    justifyContent: 'space-between',
   },
   staticsCardTitle: {
     fontSize: fontSize.f22,
     fontFamily: fonts['Poppins-Bold'],
     color: Colors.white,
+    lineHeight: 28,
   },
   staticsCardSubTitle: {
     fontSize: fontSize.f10,
@@ -108,12 +141,10 @@ const styles = StyleSheet.create({
   staticsCardSubTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-
     gap: 5,
   },
   staticsCardContainer: {
-    gap: 10,
-    paddingHorizontal: 15,
-    height: hp('10'),
+    gap: 8,
+    paddingHorizontal: 16,
   },
 });

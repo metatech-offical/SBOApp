@@ -1,19 +1,19 @@
 import {
   View,
-  Text,
   StyleSheet,
-  FlatList,
   ActivityIndicator,
 } from 'react-native';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import dayjs from 'dayjs';
-import NodataFound from '@components/DataEmpty/NodataFound';
-import AnimationBackground from '@components/AnimationComponent/AnimationBackground';
+import TicketingNoResult from '@components/DataEmpty/TicketingNoResult';
 import EventCard from '@components/ScreenLayouts/CreatorEventComp/EventCard';
 import {useGetEventsQuery} from '@rtkServices/TicketingService';
 import {navigationRef} from '@navigation/utils';
 import {Tabs} from 'react-native-collapsible-tab-view';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {
+  DUMMY_UPCOMING_EVENTS,
+  filterDummyEvents,
+} from '@utils/dummyTicketing';
 
 const FALLBACK_EVENT_IMAGE = require('@assets/images/EventImg.png');
 
@@ -32,7 +32,7 @@ const ComingSoonEvent = ({
 }) => {
   const [debouncedSearch, setDebouncedSearch] = useState(search);
 
-  const {data, isLoading, error, refetch, isFetching} = useGetEventsQuery({
+  const {data, isLoading, refetch, isFetching} = useGetEventsQuery({
     page: 1,
     limit: 10,
     timeFilter: 'upcoming',
@@ -40,13 +40,24 @@ const ComingSoonEvent = ({
     city,
     date,
   });
-  const events = data?.data?.events ?? [];
+  const apiEvents = data?.data?.events ?? [];
+  const events = useMemo(() => {
+    if (apiEvents.length > 0) {
+      return apiEvents;
+    }
+    return filterDummyEvents(DUMMY_UPCOMING_EVENTS, {
+      search: debouncedSearch,
+      city,
+      date,
+    });
+  }, [apiEvents, debouncedSearch, city, date]);
 
   useEffect(() => {
-    if (data?.data?.events?.[0]?.creatorId?._id) {
-      onGetCreatorId?.(data?.data?.events?.[0]?.creatorId?._id);
+    const creatorId = events?.[0]?.creatorId?._id || events?.[0]?.creatorId;
+    if (creatorId) {
+      onGetCreatorId?.(creatorId);
     }
-  }, [data]);
+  }, [events]);
 
   // Debounce effect
   useEffect(() => {
@@ -66,20 +77,8 @@ const ComingSoonEvent = ({
       );
     }
 
-    if (error) {
-      return (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>
-            {'data' in error && error.data?.message
-              ? error.data.message
-              : 'Unable to fetch events right now.'}
-          </Text>
-        </View>
-      );
-    }
-
-    return <NodataFound />;
-  }, [error, isLoading]);
+    return <TicketingNoResult />;
+  }, [isLoading]);
 
   const formatDate = useCallback(
     (value?: string) => (value ? dayjs(value).format('DD MMM YYYY') : '--'),

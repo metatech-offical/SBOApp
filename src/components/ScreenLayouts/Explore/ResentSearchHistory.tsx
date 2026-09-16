@@ -5,6 +5,7 @@ import {CrossIcon} from '@assets/svg/AuthFlowIcons';
 import {Colors} from '@constant/colors';
 import {fonts} from '@constant/fontfamily';
 import {navigate} from '@navigation/utils';
+import {isDummyReelId} from '@utils/dummyVideos';
 import {useDeleteSearchHistoryMutation} from '@rtkServices/SearchService';
 import { fontSize } from '@constant/fontSize';
 
@@ -15,9 +16,12 @@ interface ResentSearchHistoryProps {
 
 export default function ResentSearchHistory({data}: ResentSearchHistoryProps) {
   const [deleteSearchHistory] = useDeleteSearchHistoryMutation();
-  const onDeleteItem = async (id: string) => {
+  const onDeleteItem = async (item: RecentSearchItem) => {
+    if (isDummyReelId(item._id)) {
+      return;
+    }
     try {
-      const response = await deleteSearchHistory({search: id}).unwrap();
+      await deleteSearchHistory({search: item.keyword}).unwrap();
     } catch (error) {
       console.log('error-------->', error);
     }
@@ -37,7 +41,7 @@ export default function ResentSearchHistory({data}: ResentSearchHistoryProps) {
       <Text style={styles.searchText}>{item.keyword}</Text>
       <TouchableOpacity
         style={styles.deleteButton}
-        onPress={() => onDeleteItem(item.keyword)}>
+        onPress={() => onDeleteItem(item)}>
         <CrossIcon color={Colors.white} size={16} />
       </TouchableOpacity>
     </TouchableOpacity>

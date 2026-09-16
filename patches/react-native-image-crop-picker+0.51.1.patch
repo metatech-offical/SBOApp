@@ -1,0 +1,51 @@
+diff --git a/node_modules/react-native-image-crop-picker/index.js b/node_modules/react-native-image-crop-picker/index.js
+index 6cbbff1..e42203d 100644
+--- a/node_modules/react-native-image-crop-picker/index.js
++++ b/node_modules/react-native-image-crop-picker/index.js
+@@ -1,8 +1,17 @@
+ import ImageCropPicker from "./src/NativeImageCropPicker";
+ 
++const requirePicker = () => {
++  if (ImageCropPicker == null) {
++    throw new Error(
++      "react-native-image-crop-picker native module is not linked. Rebuild the app.",
++    );
++  }
++  return ImageCropPicker;
++};
++
+ export default ImageCropPicker;
+-export const openPicker = ImageCropPicker.openPicker;
+-export const openCamera = ImageCropPicker.openCamera;
+-export const openCropper = ImageCropPicker.openCropper;
+-export const clean = ImageCropPicker.clean;
+-export const cleanSingle = ImageCropPicker.cleanSingle;
++export const openPicker = (options) => requirePicker().openPicker(options);
++export const openCamera = (options) => requirePicker().openCamera(options);
++export const openCropper = (options) => requirePicker().openCropper(options);
++export const clean = () => requirePicker().clean();
++export const cleanSingle = (path) => requirePicker().cleanSingle(path);
+diff --git a/node_modules/react-native-image-crop-picker/src/NativeImageCropPicker.ts b/node_modules/react-native-image-crop-picker/src/NativeImageCropPicker.ts
+index f2a4c0c..830fe07 100644
+--- a/node_modules/react-native-image-crop-picker/src/NativeImageCropPicker.ts
++++ b/node_modules/react-native-image-crop-picker/src/NativeImageCropPicker.ts
+@@ -1,4 +1,4 @@
+-import { TurboModule, TurboModuleRegistry } from "react-native";
++import { NativeModules, TurboModule, TurboModuleRegistry } from "react-native";
+ 
+ export type PickerResponse = {
+   path: string;
+@@ -56,6 +56,10 @@ export interface Spec extends TurboModule {
+   cleanSingle(path: string): Promise<void>;
+ }
+ 
+-export default TurboModuleRegistry.getEnforcing<Spec>(
+-  "RNCImageCropPicker"
+-) as Spec;
++const ImageCropPicker =
++  TurboModuleRegistry.get<Spec>("RNCImageCropPicker") ??
++  (NativeModules.RNCImageCropPicker as Spec | undefined) ??
++  (NativeModules.ImageCropPicker as Spec | undefined) ??
++  null;
++
++export default ImageCropPicker as Spec;

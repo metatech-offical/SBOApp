@@ -4,157 +4,148 @@ import FastImage from 'react-native-fast-image';
 import {fontSize} from '@constant/fontSize';
 import {fonts} from '@constant/fontfamily';
 import {Colors} from '@constant/colors';
+import {
+  getDummyProductById,
+  isDummyProductId,
+} from '@utils/dummyMerchandise';
 
 interface CartListItemProps {
   item: CartItem;
   onPress: () => void;
 }
 
+const formatCategoryLabel = (category?: string) => {
+  if (!category) {
+    return '';
+  }
+  if (category === 'T-Shirts') {
+    return 'T-shirt';
+  }
+  return category;
+};
+
 const CheckoutListItem = ({item, onPress}: CartListItemProps) => {
+  const dummyProduct = isDummyProductId(item?.productId?._id)
+    ? getDummyProductById(item?.productId?._id)
+    : undefined;
+  const category = formatCategoryLabel(dummyProduct?.category);
+  const storeName =
+    dummyProduct?.storeName || item?.productId?.storeId?.name || '';
+
   return (
-    <View style={styles.outerContainer}>
-      <TouchableOpacity
-        onPress={onPress}
-        style={styles.container}
-        activeOpacity={0.7}>
-        <View style={styles.imageWrapper}>
-          <FastImage
-            source={{uri: item?.productId?.media[0]}}
-            style={styles.image}
-            resizeMode={FastImage.resizeMode.cover}
-          />
-        </View>
-        <View style={styles.contentContainer}>
-          <View style={styles.headerContainer}>
-            <Text style={styles.title} numberOfLines={1}>
-              {item?.productId.productName}
-            </Text>
-          </View>
-          {item?.productId?.storeId?.name && (
-            <Text style={styles.storeName}>{item?.productId.storeId.name}</Text>
-          )}
-          <View style={styles.priceContainer}>
-            <Text style={styles.priceValue}>${item?.variant.price}</Text>
-            <View style={styles.sizeContainer}>
-              <View style={styles.sizeChip}>
-                <Text style={styles.detailLabel}>Size:</Text>
-                <Text style={styles.detailValue}>
-                  {item?.variant?.size || 'N/A'}
-                </Text>
-              </View>
-              <View style={styles.sizeChip}>
-                <Text style={styles.quantityLabel}>Qty:</Text>
-                <Text style={styles.detailValue}>{item?.quantity}</Text>
-              </View>
+    <TouchableOpacity
+      onPress={onPress}
+      style={styles.card}
+      activeOpacity={0.85}>
+      <FastImage
+        source={
+          item?.productId?.media?.[0]
+            ? {uri: item.productId.media[0]}
+            : require('@assets/images/dummyImage.png')
+        }
+        style={styles.image}
+        resizeMode={FastImage.resizeMode.cover}
+      />
+      <View style={styles.content}>
+        <Text style={styles.title} numberOfLines={2}>
+          {item?.productId?.productName}
+        </Text>
+        {!!category && <Text style={styles.meta}>{category}</Text>}
+        {!!storeName && <Text style={styles.brand}>{storeName}</Text>}
+        <View style={styles.footerRow}>
+          <Text style={styles.price}>£{item?.variant?.price}</Text>
+          <View style={styles.chipRow}>
+            <View style={styles.chip}>
+              <Text style={styles.chipLabel}>Size: </Text>
+              <Text style={styles.chipValue}>
+                {item?.variant?.size || 'N/A'}
+              </Text>
+            </View>
+            <View style={styles.chip}>
+              <Text style={styles.chipLabel}>Qty: </Text>
+              <Text style={styles.chipValue}>{item?.quantity}</Text>
             </View>
           </View>
         </View>
-      </TouchableOpacity>
-    </View>
+      </View>
+    </TouchableOpacity>
   );
 };
 
 export default CheckoutListItem;
 
 const styles = StyleSheet.create({
-  outerContainer: {
-    marginHorizontal: 10,
-    marginVertical: 10,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    overflow: 'hidden',
-  },
-  container: {
+  card: {
     flexDirection: 'row',
-    borderRadius: 20,
-    height: 130,
-    overflow: 'hidden',
-    backgroundColor: 'transparent',
-  },
-  imageWrapper: {
-    width: 110,
-    height: '100%',
-    overflow: 'hidden',
-    borderRightWidth: 1,
-    borderRightColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 14,
+    padding: 20,
+    columnGap: 22,
   },
   image: {
-    width: '100%',
-    height: '100%',
+    width: 100,
+    height: 121,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
-  contentContainer: {
+  content: {
     flex: 1,
-    padding: 14,
     justifyContent: 'space-between',
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
+    paddingVertical: 2,
   },
   title: {
     fontSize: fontSize.f16,
-    fontFamily: fonts['Poppins-SemiBold'],
-    color: Colors.white,
-    flex: 1,
-    letterSpacing: 0.2,
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-    justifyContent: 'space-between',
-  },
-  priceValue: {
-    fontSize: fontSize.f16,
-    fontFamily: fonts['Poppins-SemiBold'],
-    color: Colors.white,
-  },
-  detailLabel: {
-    fontSize: fontSize.f12,
-    fontFamily: fonts['Poppins-Regular'],
-    color: Colors.grey,
-    marginRight: 4,
-  },
-  sizeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    columnGap: 10,
-  },
-  sizeChip: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  detailValue: {
-    fontSize: fontSize.f12,
     fontFamily: fonts['Poppins-Medium'],
     color: Colors.white,
+    lineHeight: 22,
   },
-  quantityLabel: {
+  meta: {
     fontSize: fontSize.f12,
     fontFamily: fonts['Poppins-Regular'],
-    color: Colors.grey,
-    marginRight: 6,
-  },
-  dropdown: {
-    width: 70,
-    height: 10,
-    marginLeft: 0,
-    marginTop: -60,
-  },
-  storeName: {
-    fontSize: fontSize.f14,
-    fontFamily: fonts['Poppins-Medium'],
     color: '#A7A8B4',
-    marginBottom: 6,
+    marginTop: 2,
+  },
+  brand: {
+    fontSize: fontSize.f12,
+    fontFamily: fonts['Poppins-Regular'],
+    color: '#A7A8B4',
+    marginTop: 2,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  price: {
+    fontSize: fontSize.f18,
+    fontFamily: fonts['Poppins-SemiBold'],
+    color: Colors.white,
+    includeFontPadding: false,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: 6,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(171,171,171,0.1)',
+    borderRadius: 5,
+    paddingHorizontal: 8,
+    height: 22,
+  },
+  chipLabel: {
+    fontSize: fontSize.f10,
+    fontFamily: fonts['Poppins-Regular'],
+    color: 'rgba(255,255,255,0.5)',
+    includeFontPadding: false,
+  },
+  chipValue: {
+    fontSize: fontSize.f10,
+    fontFamily: fonts['Poppins-Medium'],
+    color: 'rgba(255,255,255,0.9)',
+    includeFontPadding: false,
   },
 });

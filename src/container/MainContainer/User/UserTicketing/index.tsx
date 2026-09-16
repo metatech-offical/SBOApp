@@ -12,7 +12,7 @@ import {
 import React, {useRef, useState} from 'react';
 import {UserTicketingProps} from '@navigation/screens';
 import MerchandiseHeader from '@components/CustomHeaders/MerchandiseHeader';
-import AnimatedBackground from '@components/AnimationComponent/AnimationBackground';
+import GlowBackground from '@components/AnimationComponent/GlowBackground';
 import TextInputWithLabels from '@components/CustomInputs/TextInputWithLabels';
 import {LocationIcon} from '@assets/svg/TicktingIcons';
 import {CalendarIcon, SearchIcon} from '@assets/svg/HomeScreenIcon';
@@ -50,20 +50,10 @@ const UserTicketing = ({navigation}: UserTicketingProps) => {
   };
   return (
     <View style={styles.container}>
-      <View style={StyleSheet.absoluteFillObject}>
-        <AnimatedBackground
-          animationSource={require('@assets/animations/AuthAnimation4.json')}
-          backgroundColor="#1a1538"
-        />
-      </View>
+      <GlowBackground />
       <View style={{flex: 1, zIndex: 2}}>
         <View style={{zIndex: 100, overflow: 'hidden'}}>
-          <View style={StyleSheet.absoluteFillObject}>
-            <AnimatedBackground
-              animationSource={require('@assets/animations/AuthAnimation4.json')}
-              backgroundColor="#1a1538"
-            />
-          </View>
+          <GlowBackground />
           <MerchandiseHeader
             onBackPress={() => navigation.goBack()}
             isCartVisible={false}
@@ -202,6 +192,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     width: '100%',
+    overflow: 'hidden',
   },
   contentOverlay: {
     // zIndex: 2,

@@ -1,8 +1,6 @@
 import {
   ActivityIndicator,
   Image,
-  ImageBackground,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,13 +9,13 @@ import {
 } from 'react-native';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import LinearGradient from 'react-native-linear-gradient';
-import AnimationBackground from '@components/AnimationComponent/AnimationBackground';
+import GlowBackground from '@components/AnimationComponent/GlowBackground';
 import TicketingHeader from '@components/ScreenLayouts/TicketingComp/TicketingHeader';
 import {BookTIcketProps} from '@navigation/screens';
 import {fonts} from '@constant/fontfamily';
 import {Colors} from '@constant/colors';
 import CustomDropDown from '@components/DropDown/CustomDropDown';
-import {fontSize, height, wp} from '@constant/fontSize';
+import {fontSize} from '@constant/fontSize';
 import SeatMapZoom from '@components/SeatMapZoom';
 import dayjs from 'dayjs';
 import {Slider} from '@miblanchard/react-native-slider';
@@ -28,11 +26,15 @@ import {debounce} from '@utils/helper';
 import {getCurrencySymbol} from '@utils/general';
 import CustomButton from '@components/CustomButtons/CustomButton';
 import SeeMore from './SeeMore';
+import {getDummyEventDetail, isDummyEventId} from '@utils/dummyTicketing';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+
 const sliderMin = 0;
 const sliderMax = 100;
+const FALLBACK_EVENT_IMAGE = require('@assets/images/EventImg.png');
 
 const createNumberTickets = (limit: number) => {
-  return Array.from({length: limit}, (_, i) => {
+  return Array.from({length: limit || 4}, (_, i) => {
     const number = i + 1;
     return {
       label: `${number} ticket${number > 1 ? 's' : ''}`,
@@ -47,18 +49,31 @@ const BookTIcket = ({navigation, route}: BookTIcketProps) => {
   const [priceRange, setPriceRange] = useState([0, 100]);
   const [numOfTicket, setNumOfTicket] = useState(0);
   const [maxMinPrice, setmaxMinPrice] = useState({max: 0, min: 0});
-  const {data: detailData, isLoading} = useGetEventDetailQuery({id: data?._id});
-  const eventAllData = detailData?.data;
-  const [numberOfticketData, setnumberOfTicketData] = useState<any[]>([
+  const isDummyEvent = isDummyEventId(data?._id);
+  const {data: detailData, isLoading} = useGetEventDetailQuery(
+    {id: data?._id},
+    {skip: !data?._id || isDummyEvent},
+  );
+  const eventAllData = isDummyEvent
+    ? getDummyEventDetail(data)
+    : detailData?.data;
+  const [numberOfticketData] = useState<any[]>([
     ...createNumberTickets(data?.eventLimitPerUser),
   ]);
   const [tickets, setTickets] = useState<any[]>([]);
   const [openIndex, setOpenIndex] = useState<number>(-1);
-  // console.log('detailDatadetailData', detailData);
-  // console.log('datadatadatadatadata', data);
-  //
+  const {bottom} = useSafeAreaInsets();
 
   const currency = getCurrencySymbol(data?.eventCurrencyType);
+  const coverImage = data?.eventCoverImageUrl
+    ? {uri: data.eventCoverImageUrl}
+    : FALLBACK_EVENT_IMAGE;
+  const arenaImageUrl =
+    data?.eventArenaImageUrl || eventAllData?.event?.eventArenaImageUrl;
+  const startingPrice =
+    data?.startingPrice ??
+    (maxMinPrice.min > 0 ? maxMinPrice.min : undefined);
+
   useEffect(() => {
     if (eventAllData?.tickets?.length) {
       ticketsRef.current = JSON.parse(JSON.stringify(eventAllData?.tickets));
@@ -126,187 +141,154 @@ const BookTIcket = ({navigation, route}: BookTIcketProps) => {
     totalnumberTicketOfBoooking == numOfTicket && numOfTicket > 0;
   return (
     <View style={styles.container}>
-      <AnimationBackground
-        animationSource={require('@assets/animations/AuthAnimation4.json')}
-        backgroundColor={'#1a1538'}
-        zIndex={0}
-      />
-      <View style={styles.imageBackground}>
-        <FastImage
-          source={{uri: data?.eventCoverImageUrl}}
-          style={{...StyleSheet.absoluteFillObject, opacity: 0.3}}
-        />
-        <LinearGradient
-          colors={['rgba(38, 0, 65, 0.01)', 'rgba(22, 11, 53,0.8)']}
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
-      <View
-        style={{
-          ...StyleSheet.absoluteFillObject,
-          opacity: Platform.OS == 'ios' ? 0.7 : 0.5,
-        }}>
-        <AnimationBackground
-          animationSource={require('@assets/animations/AuthAnimation4.json')}
-          backgroundColor={'#1a1538'}
-          zIndex={0}
-        />
-      </View>
-      <View style={{flex: 1, paddingBottom: 24}}>
+      <GlowBackground />
+      <View style={[styles.content, {paddingBottom: Math.max(bottom, 16)}]}>
         <TicketingHeader
           onBackPress={() => navigation.goBack()}
-          onLikePress={() => {}}
           title="Back"
-          likeCount={223}
+          isLikeVisible={false}
         />
-        <View style={{flex: 1, paddingHorizontal: 15}}>
-          <View style={{flex: 1}}>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{flexGrow: 1}}>
-              <View style={{flex: 1}}>
-                <View style={styles.contentOverlay}>
-                  <SeeMore
-                    text={data?.eventName}
-                    textStyle={styles.titleText}
-                  />
-                  {/* <Text style={styles.titleText}>{data?.eventName}</Text> */}
-                  <Text style={styles.descriptionText}>
-                    {dayjs(data?.eventDateTime).format('ddd DD MMM · h:mm A')}
-                  </Text>
-                  <Text style={styles.descriptionText}>
-                    {data?.eventLocation?.address}
-                  </Text>
-                </View>
-                <View style={{flex: 1}}>
-                  <SeatMapZoom imageUri={data?.eventArenaImageUrl} />
-                  <View style={styles.mainContainer}>
-                    <CustomDropDown
-                      placeHolder="Select Ticket "
-                      data={numberOfticketData}
-                      onSelect={val => {
-                        setNumOfTicket(val.value);
-                      }}
-                      commonStyle={styles.dropDown}
-                    />
+        <View style={styles.body}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}>
+            <FastImage source={coverImage} style={styles.coverImage} />
+            <View style={styles.contentOverlay}>
+              <SeeMore text={data?.eventName} textStyle={styles.titleText} />
+              <Text style={styles.descriptionText}>
+                {dayjs(data?.eventDateTime).format('ddd DD MMM · h:mm A')}
+              </Text>
+              {!!data?.eventLocation?.address && (
+                <Text style={styles.descriptionText}>
+                  {data?.eventLocation?.address}
+                </Text>
+              )}
+              {startingPrice != null && (
+                <Text style={styles.priceFromText}>
+                  {currency}
+                  {startingPrice} onwards
+                </Text>
+              )}
+            </View>
+            {!!arenaImageUrl && <SeatMapZoom imageUri={arenaImageUrl} />}
+            <View style={styles.mainContainer}>
+              <CustomDropDown
+                placeHolder="Select Ticket "
+                data={numberOfticketData}
+                onSelect={val => {
+                  setNumOfTicket(val.value);
+                }}
+                commonStyle={styles.dropDown}
+              />
 
-                    <Slider
-                      value={priceRange}
-                      onValueChange={onSliderChange}
-                      minimumValue={0}
-                      maximumValue={100}
-                      minimumTrackTintColor="#B687D9"
-                      maximumTrackTintColor="#E6E7E8"
-                      renderBelowThumbComponent={(index, value) =>
-                        (
-                          index == 0
-                            ? maxMinPrice.min != convert(value)
-                            : maxMinPrice.max != convert(value)
-                        ) ? (
-                          <View style={styles.valueContainer}>
-                            <Text style={styles.valueText}>
-                              {Math.round(convert(value))}
-                            </Text>
-                          </View>
-                        ) : (
-                          <></>
-                        )
-                      }
-                      renderThumbComponent={() => (
-                        <View style={styles.sliderThumb} />
-                      )}
-                    />
-                    <View style={styles.labelContainer}>
-                      <Text style={styles.priceLabel}>
-                        {currency}
-                        {maxMinPrice.min}
-                      </Text>
-                      <Text style={styles.priceLabel}>
-                        {currency}
-                        {maxMinPrice.max}
+              <Slider
+                value={priceRange}
+                onValueChange={onSliderChange}
+                minimumValue={0}
+                maximumValue={100}
+                minimumTrackTintColor="#B687D9"
+                maximumTrackTintColor="#E6E7E8"
+                renderBelowThumbComponent={(index, value) =>
+                  (
+                    index == 0
+                      ? maxMinPrice.min != convert(value)
+                      : maxMinPrice.max != convert(value)
+                  ) ? (
+                    <View style={styles.valueContainer}>
+                      <Text style={styles.valueText}>
+                        {Math.round(convert(value))}
                       </Text>
                     </View>
-
-                    {tickets?.map?.((item, index) => {
-                      const maxDisabled =
-                        item?.numberOfBoooking >= numOfTicket ||
-                        totalnumberTicketOfBoooking >= numOfTicket;
-                      const minDisabled = !item?.numberOfBoooking;
-
-                      const availableNumberOfTickets =
-                        item?.numberOfTickets - item?.numberOfSoldTickets;
-                      const rowDisabled =
-                        (totalnumberTicketOfBoooking >= numOfTicket &&
-                          !item?.numberOfBoooking) ||
-                        !availableNumberOfTickets;
-
-                      return (
-                        <View
-                          key={item?.ticketName}
-                          pointerEvents={rowDisabled ? 'none' : 'auto'}
-                          style={{opacity: rowDisabled ? 0.3 : 1}}>
-                          <TouchableOpacity
-                            activeOpacity={0.8}
-                            onPress={() => {
-                              if (
-                                typeof item?.numberOfBoooking == 'undefined' &&
-                                numOfTicket &&
-                                totalnumberTicketOfBoooking < numOfTicket
-                              ) {
-                                onChangenumberOfBoooking(1, index);
-                              }
-                              setOpenIndex(prev =>
-                                prev == index ? -1 : index,
-                              );
-                            }}
-                            style={styles.priceDetail}>
-                            <View style={styles.ticketNameContainer}>
-                              <Image
-                                source={require('@assets/images/TicketManage.png')}
-                                style={styles.ticketManageImg}
-                              />
-                              <Text style={styles.ticketNamePrice}>
-                                {item?.ticketName}
-                              </Text>
-                            </View>
-                            <Text style={styles.ticketNamePrice}>
-                              {currency}
-                              {item?.originalPrice}
-                            </Text>
-                          </TouchableOpacity>
-                          {((index === openIndex && !rowDisabled) ||
-                            item?.numberOfBoooking > 0) && (
-                            <View style={styles.counterContainer}>
-                              <TicketCounter
-                                maxDisabled={maxDisabled}
-                                minDisabled={minDisabled}
-                                max={availableNumberOfTickets}
-                                onChange={val =>
-                                  onChangenumberOfBoooking(val, index)
-                                }
-                                value={item?.numberOfBoooking || 0}
-                              />
-                            </View>
-                          )}
-                          <LinearGradient
-                            start={{x: 0, y: 0}}
-                            end={{y: 0, x: 1}}
-                            colors={['#FFFFFF00', '#FFFFFF30', '#FFFFFF00']}
-                            style={styles.gradientBorder}
-                          />
-                        </View>
-                      );
-                    })}
-                  </View>
-                  {isLoading && (
-                    <View style={styles.loaderContainer}>
-                      <ActivityIndicator size="small" color="#ffffff" />
-                    </View>
-                  )}
-                </View>
+                  ) : (
+                    <></>
+                  )
+                }
+                renderThumbComponent={() => <View style={styles.sliderThumb} />}
+              />
+              <View style={styles.labelContainer}>
+                <Text style={styles.priceLabel}>
+                  {currency}
+                  {maxMinPrice.min}
+                </Text>
+                <Text style={styles.priceLabel}>
+                  {currency}
+                  {maxMinPrice.max}
+                </Text>
               </View>
-            </ScrollView>
-          </View>
+
+              {tickets?.map?.((item, index) => {
+                const maxDisabled =
+                  item?.numberOfBoooking >= numOfTicket ||
+                  totalnumberTicketOfBoooking >= numOfTicket;
+                const minDisabled = !item?.numberOfBoooking;
+
+                const availableNumberOfTickets =
+                  item?.numberOfTickets - item?.numberOfSoldTickets;
+                const rowDisabled =
+                  (totalnumberTicketOfBoooking >= numOfTicket &&
+                    !item?.numberOfBoooking) ||
+                  !availableNumberOfTickets;
+
+                return (
+                  <View
+                    key={item?._id || item?.ticketName}
+                    pointerEvents={rowDisabled ? 'none' : 'auto'}
+                    style={{opacity: rowDisabled ? 0.3 : 1}}>
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      onPress={() => {
+                        if (
+                          typeof item?.numberOfBoooking == 'undefined' &&
+                          numOfTicket &&
+                          totalnumberTicketOfBoooking < numOfTicket
+                        ) {
+                          onChangenumberOfBoooking(1, index);
+                        }
+                        setOpenIndex(prev => (prev == index ? -1 : index));
+                      }}
+                      style={styles.priceDetail}>
+                      <View style={styles.ticketNameContainer}>
+                        <Image
+                          source={require('@assets/images/TicketManage.png')}
+                          style={styles.ticketManageImg}
+                        />
+                        <Text style={styles.ticketNamePrice}>
+                          {item?.ticketName}
+                        </Text>
+                      </View>
+                      <Text style={styles.ticketNamePrice}>
+                        {currency}
+                        {item?.originalPrice}
+                      </Text>
+                    </TouchableOpacity>
+                    {((index === openIndex && !rowDisabled) ||
+                      item?.numberOfBoooking > 0) && (
+                      <View style={styles.counterContainer}>
+                        <TicketCounter
+                          maxDisabled={maxDisabled}
+                          minDisabled={minDisabled}
+                          max={availableNumberOfTickets}
+                          onChange={val => onChangenumberOfBoooking(val, index)}
+                          value={item?.numberOfBoooking || 0}
+                        />
+                      </View>
+                    )}
+                    <LinearGradient
+                      start={{x: 0, y: 0}}
+                      end={{y: 0, x: 1}}
+                      colors={['#FFFFFF00', '#FFFFFF30', '#FFFFFF00']}
+                      style={styles.gradientBorder}
+                    />
+                  </View>
+                );
+              })}
+            </View>
+            {isLoading && (
+              <View style={styles.loaderContainer}>
+                <ActivityIndicator size="small" color="#ffffff" />
+              </View>
+            )}
+          </ScrollView>
           <CustomButton
             text="Continue"
             onPress={onContinue}
@@ -333,86 +315,62 @@ export default BookTIcket;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    overflow: 'hidden',
   },
-  imageBackground: {
+  content: {
+    flex: 1,
+    zIndex: 2,
+  },
+  body: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 12,
+  },
+  coverImage: {
     width: '100%',
-    height: height / 3,
-    ...StyleSheet.absoluteFillObject,
-    // resizeMode: 'cover',
+    height: 200,
+    borderRadius: 10,
   },
   contentOverlay: {
-    // paddingHorizontal: 15,
-  },
-  contentContainer: {},
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginTop: 16,
     marginBottom: 8,
-  },
-  ratingText: {
-    fontSize: fontSize.f12,
-    fontFamily: fonts['Poppins-Regular'],
-    color: 'rgba(255, 255, 255, 0.7)',
-    marginRight: 4,
-  },
-  categoryText: {
-    fontSize: fontSize.f12,
-    fontFamily: fonts['Poppins-Regular'],
-    color: 'rgba(255, 255, 255, 0.7)',
-    marginLeft: 8,
   },
   titleText: {
     fontSize: fontSize.f22,
-    fontFamily: fonts['Poppins-Medium'],
+    fontFamily: fonts['Poppins-SemiBold'],
     color: Colors.white,
     lineHeight: 32,
   },
-  imageContainer: {
-    width: '100%',
-    height: 220,
-    overflow: 'hidden',
-    resizeMode: 'cover',
-    alignItems: 'center',
-  },
-  image: {
-    width: '95%',
-    height: '95%',
-    borderRadius: 10,
-  },
   mainContainer: {
     flex: 1,
-    // paddingHorizontal: 15,
   },
   descriptionText: {
     fontSize: fontSize.f12,
     fontFamily: fonts['Poppins-Regular'],
-    color: '#FFFFFF60',
+    color: '#FFFFFF99',
     lineHeight: 20,
     marginTop: 4,
   },
+  priceFromText: {
+    fontSize: fontSize.f14,
+    fontFamily: fonts['Poppins-SemiBold'],
+    color: Colors.white,
+    marginTop: 8,
+  },
   dropDown: {
-    // width: '70%',
     height: 55,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 10,
-    backgroundColor: 'rgba(rgba(0, 0, 0, 0.3))',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
     borderRadius: 10,
-    borderColor: 'rgba(rgba(0, 0, 0, 0.1))',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
-  sliderWrapper: {
-    width: '100%',
-    marginTop: 20,
-    alignItems: 'center',
-  },
-
-  slider: {
-    width: '100%',
-    justifyContent: 'center',
-  },
-
   labelContainer: {
     width: '100%',
     flexDirection: 'row',
@@ -420,42 +378,10 @@ const styles = StyleSheet.create({
     marginTop: -5,
     marginBottom: 24,
   },
-
   priceLabel: {
     color: Colors.white,
     fontSize: fontSize.f14,
     fontFamily: fonts['Poppins-Regular'],
-  },
-
-  bubbleContainer: {
-    position: 'absolute',
-    top: -18,
-    alignItems: 'center',
-  },
-
-  bubble: {
-    backgroundColor: '#434957',
-    paddingHorizontal: 15,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-
-  bubbleText: {
-    color: Colors.white,
-    fontSize: fontSize.f14,
-    fontFamily: fonts['Poppins-Medium'],
-  },
-
-  bubblePointer: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 7,
-    borderRightWidth: 7,
-    borderTopWidth: 8,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: '#434957',
-    alignSelf: 'center',
   },
   sliderThumb: {
     height: 16,

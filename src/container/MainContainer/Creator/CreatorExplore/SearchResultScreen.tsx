@@ -10,9 +10,9 @@ import {SEARCH_RESULT_DATA} from '@utils/data';
 import {fonts} from '@constant/fontfamily';
 import {useGetSearchResultsQuery} from '@rtkServices/SearchService';
 import SearchHeader from '@components/CustomHeaders/SearchHeader';
-import Loader from '@components/CustomLoader/Loader';
 import UserSearchList from '@components/ScreenLayouts/Explore/UserSearchList';
 import {Colors} from '@constant/colors';
+import {withDummySearchData} from '@utils/dummyVideos';
 
 export default function SearchResultScreen({
   navigation,
@@ -22,15 +22,15 @@ export default function SearchResultScreen({
   const [search, setSearch] = useState(searchQuery);
   const [activeStep, setActiveStep] = useState(1);
 
-  const {
-    data: searchResults,
-    isLoading,
-    refetch,
-  } = useGetSearchResultsQuery({search: search});
+  const {data: searchResults, refetch} = useGetSearchResultsQuery({
+    search: search,
+  });
 
   useEffect(() => {
     refetch();
   }, [search]);
+
+  const searchData = withDummySearchData(searchResults?.data, search);
 
   return (
     <View style={styles.container}>
@@ -50,11 +50,7 @@ export default function SearchResultScreen({
           containerStyle={{backgroundColor: '#130E33', marginBottom: hp('2')}}
         />
 
-        {isLoading ? (
-          <Loader visible={isLoading} />
-        ) : (
-          <>
-            <View style={styles.stepContainerWrapper}>
+        <View style={styles.stepContainerWrapper}>
               {SEARCH_RESULT_DATA.map(item => (
                 <Pressable
                   key={item.id}
@@ -74,14 +70,12 @@ export default function SearchResultScreen({
               ))}
             </View>
             {activeStep === 1 ? (
-              <VideoSearchList data={searchResults?.data?.streams || []} />
+              <VideoSearchList data={searchData.streams} />
             ) : activeStep === 2 ? (
-              <ShortsList data={searchResults?.data?.shorts || []} />
+              <ShortsList data={searchData.shorts} />
             ) : (
-              <UserSearchList data={searchResults?.data?.users || []} />
+              <UserSearchList data={searchData.users} />
             )}
-          </>
-        )}
       </View>
     </View>
   );

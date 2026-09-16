@@ -8,6 +8,7 @@ import {useGetPastEventsQuery} from '@rtkServices/CreatorTicketingService';
 import {useNavigation} from '@react-navigation/native';
 import {RootState, useAppSelector} from '@store/index';
 import SearchInput from '@components/CustomInputs/SearchInput';
+import {DUMMY_PAST_EVENTS, filterDummyEvents} from '@utils/dummyTicketing';
 
 interface PastEventsProps {
   searchQuery: string;
@@ -23,6 +24,9 @@ const PastEvents = ({searchQuery, onSearchChange}: PastEventsProps) => {
     creatorId: user?._id || '',
     search: searchQuery || undefined,
   });
+  const events = pastEvents?.data?.events?.length
+    ? pastEvents.data.events
+    : filterDummyEvents(DUMMY_PAST_EVENTS, {search: searchQuery});
   return (
     <View style={styles.container}>
       <AnimationBackground
@@ -43,7 +47,7 @@ const PastEvents = ({searchQuery, onSearchChange}: PastEventsProps) => {
             />
           }
           stickyHeaderIndices={[0]}
-          data={pastEvents?.data?.events || []}
+          data={events}
           ListEmptyComponent={<NodataFound />}
           showsVerticalScrollIndicator={false}
           renderItem={({item}) => (

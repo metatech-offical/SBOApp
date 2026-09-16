@@ -9,13 +9,19 @@ import {
 } from 'react-native';
 import React from 'react';
 import {Colors} from '@constant/colors';
-import {fontSize, hp, wp} from '@constant/fontSize';
+import {fontSize} from '@constant/fontSize';
 import {fonts} from '@constant/fontfamily';
-import {FavoriteIcon} from '@assets/svg/HomeScreenIcon';
-import {BackArrow} from '@assets/svg/AuthFlowIcons';
+import {FavoriteIcon, HomeChevronIcon} from '@assets/svg/HomeScreenIcon';
 import FastImage from 'react-native-fast-image';
 import {useGetFavoriteCreatorsQuery} from '@rtkServices/HomeService';
 import {navigate} from '@navigation/utils';
+import HomeEmptyRow from './HomeEmptyRow';
+import {DUMMY_FAVORITE_CREATORS} from '@utils/dummyHome';
+
+const AVATAR_SIZE = 76;
+const ITEM_WIDTH = 76;
+
+const goToFavoriteList = () => navigate('FavoriteCreatorList', {});
 
 export const CreatorCard = ({creator}: {creator: FavoriteCreator}) => {
   return (
@@ -23,7 +29,7 @@ export const CreatorCard = ({creator}: {creator: FavoriteCreator}) => {
       onPress={() => {
         navigate('OtherUserProfile', {userId: creator.creator._id});
       }}
-      style={styles.creatorCard}>
+      style={styles.cell}>
       <FastImage
         source={
           creator.creator.profilePicture
@@ -42,65 +48,49 @@ export const CreatorCard = ({creator}: {creator: FavoriteCreator}) => {
 export default function FavoriteCreatorSection() {
   const {data, isLoading} = useGetFavoriteCreatorsQuery({
     page: 1,
-    limit: 10,
+    limit: 16,
   });
 
-  const EmptyList = ({isLoading}: {isLoading: boolean}) => {
-    return (
-      <View style={styles.emptyListContainer}>
-        <View style={styles.iconContainer}>
-          {isLoading ? (
-            <ActivityIndicator size="small" color={Colors.white} />
-          ) : (
-            <FavoriteIcon />
-          )}
-        </View>
-        <Text style={styles.emptyListText}>
-          {isLoading
-            ? 'Loading favorite creators...'
-            : 'You can add your favorite creators here'}
-        </Text>
-      </View>
-    );
-  };
+  const creators = data?.data?.creators?.length
+    ? data.data.creators
+    : DUMMY_FAVORITE_CREATORS;
 
   return (
     <View style={styles.container}>
       <View style={styles.titleContainer}>
-        <View style={styles.favoriteIconContainer}>
-          <FavoriteIcon />
+        <View style={styles.titleRow}>
+          <FavoriteIcon width={18} height={18} />
           <Text style={styles.title}>My favorite creators</Text>
         </View>
         <TouchableOpacity
           hitSlop={20}
-          onPress={() => {
-            navigate('FavoriteCreatorList', {});
-          }}
+          onPress={goToFavoriteList}
           style={styles.viewAllContainer}>
           <Text style={styles.seeAll}>View All</Text>
-          <BackArrow
-            fill={Colors.white}
-            width={10}
-            height={10}
-            opacity={0.5}
-            style={{transform: [{rotate: '180deg'}]}}
-          />
+          <HomeChevronIcon />
         </TouchableOpacity>
       </View>
 
       {isLoading ? (
-        <EmptyList isLoading={true} />
-      ) : data && data?.data?.creators?.length > 0 ? (
+        <HomeEmptyRow
+          icon={<ActivityIndicator size="small" color={Colors.white} />}
+          text="Loading favorite creators..."
+        />
+      ) : creators.length > 0 ? (
         <FlatList
-          data={data?.data?.creators}
-          renderItem={({item}) => <CreatorCard creator={item} />}
-          keyExtractor={item => item._id}
+          data={creators}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.creatorListContainer}
+          keyExtractor={item => item._id}
+          renderItem={({item}) => <CreatorCard creator={item} />}
+          contentContainerStyle={styles.listContainer}
         />
       ) : (
-        <EmptyList isLoading={false} />
+        <HomeEmptyRow
+          icon={<FavoriteIcon width={18} height={18} />}
+          text="Add your favorite creators"
+          onPress={goToFavoriteList}
+        />
       )}
     </View>
   );
@@ -108,91 +98,57 @@ export default function FavoriteCreatorSection() {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 10,
-    marginTop: 20,
+    marginTop: 24,
   },
-
   titleContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
   },
-
-  title: {
-    fontSize: fontSize.f14,
-    fontFamily: fonts['Poppins-SemiBold'],
-    color: Colors.white,
-  },
-  favoriteIconContainer: {
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
+    flex: 1,
+    paddingRight: 12,
+  },
+  title: {
+    fontSize: fontSize.f16,
+    fontFamily: fonts['Poppins-SemiBold'],
+    color: Colors.white,
   },
   seeAll: {
     fontSize: fontSize.f12,
     fontFamily: fonts['Poppins-Regular'],
     color: Colors.white,
-    opacity: 0.5,
+    opacity: 0.45,
   },
   viewAllContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 6,
   },
-  creatorListContainer: {
-    gap: 5,
-    paddingHorizontal: 10,
+  listContainer: {
+    gap: 16,
+    paddingHorizontal: 16,
+    marginTop: 16,
   },
-  creatorCard: {
-    width: hp('10'),
-    height: hp('13'),
-    padding: 10,
-    // backgroundColor: "red",
-    borderRadius: 10,
+  cell: {
+    width: ITEM_WIDTH,
     alignItems: 'center',
   },
   creatorImage: {
-    width: hp('8'),
-    height: hp('8'),
-    borderRadius: hp('10'),
-    alignSelf: 'center',
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
   },
   creatorName: {
     fontSize: fontSize.f12,
     fontFamily: fonts['Poppins-Regular'],
     color: Colors.white,
-    marginTop: 5,
-    // opacity: 0.5,
+    marginTop: 8,
     textAlign: 'center',
-  },
-
-  emptyListContainer: {
-    height: hp('10'),
-    width: wp('95'),
-    backgroundColor: '#FFFFFF0F',
-    borderRadius: 10,
-    alignItems: 'center',
-    flexDirection: 'row',
-    alignSelf: 'center',
-    marginTop: 10,
-    paddingHorizontal: 20,
-    gap: 10,
-    // justifyContent: "center",
-  },
-  iconContainer: {
-    width: hp('6'),
-    height: hp('6'),
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF0F',
-    borderRadius: 10,
-    // borderRadius: hp("5"),
-  },
-  emptyListText: {
-    fontSize: fontSize.f14,
-    fontFamily: fonts['Poppins-Regular'],
-    color: Colors.white,
-    width: wp('65'),
+    width: '100%',
   },
 });

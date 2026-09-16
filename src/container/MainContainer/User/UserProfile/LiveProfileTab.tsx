@@ -1,25 +1,45 @@
-import {FlatList, StyleSheet, Text, View} from 'react-native';
-import React, {useRef, useState} from 'react';
+import {FlatList, StyleSheet, View} from 'react-native';
+import React from 'react';
 import NodataFound from '@components/DataEmpty/NodataFound';
 import {useGetUserContentByIdQuery} from '@rtkServices/ProfileService';
 import LiveVideoCard from '@components/VideosComponent/LiveVideoCard';
+import ProfileLiveCard from '@components/ScreenLayouts/ProfileComponent/ProfileLiveCard';
 import {useNavigation} from '@react-navigation/native';
 import {useFollowUnfollowUserMutation} from '@rtkServices/ContentActionService';
 import Loading from '@components/CustomLoader/Loading';
 import {useToastMessage} from '@hooks/useToastMessage';
+import {DUMMY_LIVE_STREAMS, isDummyReelId} from '@utils/dummyVideos';
 
-const LiveProfileTab = ({userId}: {userId: string | undefined}) => {
+const LiveProfileTab = ({
+  userId,
+  embedded,
+  useDummyFallback,
+}: {
+  userId: string | undefined;
+  embedded?: boolean;
+  useDummyFallback?: boolean;
+}) => {
   const navigation = useNavigation();
-  const streamIdRef = useRef<string>('');
   const {showError} = useToastMessage();
   const [followAndUnfollow] = useFollowUnfollowUserMutation();
-  const {data, isLoading} = useGetUserContentByIdQuery({
-    id: userId || '',
-    types: 'video-live',
-    page: 1,
-    limit: 10,
-    search: '',
-  });
+  const {data, isLoading} = useGetUserContentByIdQuery(
+    {
+      id: userId || '',
+      types: 'video-live',
+      page: 1,
+      limit: 10,
+      search: '',
+    },
+    {skip: !userId},
+  );
+
+  const apiLives = data?.data?.content || [];
+  const lives =
+    apiLives.length > 0
+      ? apiLives
+      : useDummyFallback
+        ? DUMMY_LIVE_STREAMS
+        : [];
 
   const handleFollow = async (id: string) => {
     try {
@@ -37,28 +57,60 @@ const LiveProfileTab = ({userId}: {userId: string | undefined}) => {
       console.log('error', error);
     }
   };
+
+  const openLive = (item: any) => {
+    if (isDummyReelId(item?._id)) {
+      return;
+    }
+    (navigation as any).navigate('LiveViewer', {liveID: item?._id});
+  };
+
+  if (!embedded) {
+    return (
+      <View style={styles.container}>
+        {isLoading ? (
+          <Loading />
+        ) : (
+          <FlatList
+            data={lives}
+            nestedScrollEnabled
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={<NodataFound />}
+            keyExtractor={item => item._id}
+            renderItem={({item}) => (
+              <LiveVideoCard
+                item={item}
+                handleFollow={() => handleFollow(item?.creator?._id)}
+                navigation={navigation}
+                isOptionPress={() => {}}
+                type="profile"
+              />
+            )}
+          />
+        )}
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
+    <View style={styles.embedded}>
       {isLoading ? (
         <Loading />
       ) : (
         <FlatList
-          data={data?.data?.content}
-          nestedScrollEnabled={true}
-          contentContainerStyle={styles.contentContainer}
+          data={lives}
+          scrollEnabled={false}
+          nestedScrollEnabled
           showsVerticalScrollIndicator={false}
-          ListEmptyComponent={<NodataFound />}
+          ListEmptyComponent={<NodataFound compact />}
+          keyExtractor={item => item._id}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          contentContainerStyle={styles.list}
           renderItem={({item}) => (
-            <LiveVideoCard
+            <ProfileLiveCard
               item={item}
-              handleFollow={() => {
-                handleFollow(item?.creator?._id);
-              }}
-              navigation={navigation}
-              isOptionPress={() => {
-                streamIdRef.current = item?._id;
-              }}
-              type="profile"
+              onPress={() => openLive(item)}
+              onFollow={() => handleFollow(item?.creator?._id)}
             />
           )}
         />
@@ -66,11 +118,21 @@ const LiveProfileTab = ({userId}: {userId: string | undefined}) => {
     </View>
   );
 };
+
 export default LiveProfileTab;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     marginHorizontal: 10,
   },
-  contentContainer: {},
+  embedded: {
+    width: '100%',
+  },
+  list: {
+    paddingBottom: 26,
+  },
+  separator: {
+    height: 28,
+  },
 });

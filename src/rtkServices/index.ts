@@ -96,6 +96,7 @@ export const api = createApi({
     'LiveStream',
     'ContentUpload',
     'Event',
+    'FavoriteCreators',
   ],
   endpoints: builder => ({}),
   refetchOnFocus: true,

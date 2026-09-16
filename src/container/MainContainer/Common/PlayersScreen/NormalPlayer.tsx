@@ -17,6 +17,7 @@ import CustomVideoPlayer from '@components/PlayerScreenComponent/CustomVideoPlay
 import Controlers from '@components/PlayerScreenComponent/Controlers';
 import PlayerBottom from '@components/PlayerScreenComponent/PlayerBottom';
 import {useGetStreamByIdQuery} from '@rtkServices/ShortsService';
+import {getDummyStreamById, isDummyReelId} from '@utils/dummyVideos';
 import {
   useLikeContentMutation,
   useFollowUnfollowUserMutation,
@@ -59,13 +60,20 @@ const NormalPlayer = ({navigation, route}: NormalPlayerProps) => {
   const [selectedFilter, setSelectedFilter] = useState<any>('');
 
   const {showError, showSuccess} = useToastMessage();
+  const isDummyStream = isDummyReelId(streamId);
+  const dummyStream = isDummyStream ? getDummyStreamById(streamId) : undefined;
   const [likeContent] = useLikeContentMutation();
   const [followUnfollowUser] = useFollowUnfollowUserMutation();
   const [viewContent] = useViewContentMutation();
   const [reportUser] = useReportContentMutation();
   const [notIntrestReq] = useNotInterestedMutation();
   const [deleteStream] = useDeleteStreamMutation();
-  const {data: streamData, isLoading} = useGetStreamByIdQuery({id: streamId});
+  const {data: apiStreamData, isLoading: apiLoading} = useGetStreamByIdQuery(
+    {id: streamId},
+    {skip: !streamId || isDummyStream},
+  );
+  const streamData = dummyStream ? {data: dummyStream} : apiStreamData;
+  const isLoading = isDummyStream ? false : apiLoading;
 
   const CreatorData = streamData?.data?.creator;
   const isFollowing = streamData?.data?.isFollowing;
@@ -107,7 +115,7 @@ const NormalPlayer = ({navigation, route}: NormalPlayerProps) => {
 
   // Handle view content
   const handleViewContent = useCallback(async () => {
-    if (!streamId || !streamData?.data?._id) return;
+    if (!streamId || !streamData?.data?._id || isDummyReelId(streamId)) return;
     try {
       await viewContent({
         contentId: streamId,
@@ -172,6 +180,10 @@ const NormalPlayer = ({navigation, route}: NormalPlayerProps) => {
 
     setLike(!prevLike);
     setLikeCount(prevLike ? prevLikeCount - 1 : prevLikeCount + 1);
+
+    if (isDummyReelId(streamData?.data?._id)) {
+      return;
+    }
 
     try {
       const response = await likeContent({

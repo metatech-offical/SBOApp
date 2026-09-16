@@ -1,33 +1,67 @@
-import {View, Text, StyleSheet, FlatList} from 'react-native';
-import React from 'react';
+import {View, StyleSheet, FlatList} from 'react-native';
+import React, {useCallback, useMemo} from 'react';
+import dayjs from 'dayjs';
 import NodataFound from '@components/DataEmpty/NodataFound';
-import AnimationBackground from '@components/AnimationComponent/AnimationBackground';
+import EventCard from '@components/ScreenLayouts/CreatorEventComp/EventCard';
+import {navigationRef} from '@navigation/utils';
+import {DUMMY_PAST_EVENTS, filterDummyEvents} from '@utils/dummyTicketing';
 
-const PastEvents = () => {
+const FALLBACK_EVENT_IMAGE = require('@assets/images/EventImg.png');
+
+const PastEvents = ({
+  search = '',
+  city = '',
+  date,
+}: {
+  search?: string;
+  city?: string;
+  date?: any;
+}) => {
+  const events = useMemo(
+    () => filterDummyEvents(DUMMY_PAST_EVENTS, {search, city, date}),
+    [search, city, date],
+  );
+
+  const formatDate = useCallback(
+    (value?: string) => (value ? dayjs(value).format('DD MMM YYYY') : '--'),
+    [],
+  );
+
+  const formatTime = useCallback(
+    (value?: string) => (value ? dayjs(value).format('hh:mm A') : '--'),
+    [],
+  );
+
   return (
     <View style={styles.container}>
-      <AnimationBackground
-        animationSource={require('@assets/animations/AuthAnimation4.json')}
-        backgroundColor={'#1a1538'}
-        zIndex={0}
-      />
       <FlatList
-        data={[]}
+        data={events}
         ListEmptyComponent={<NodataFound />}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{paddingBottom: 100}}
+        keyExtractor={item => item._id}
         renderItem={({item}) => (
-          <></>
-          // <EventCard
-          //   id={item.id}
-          //   event_Name={item.event_Name}
-          //   event_Cover_Image={item.event_Cover_Image}
-          //   event_Date={item.event_Date}
-          //   event_Status={item.event_Status}
-          //   SoldticketsCount={item.SoldticketsCount}
-          //   showStartTime={item.showStartTime}
-          //   ShowEndTime={item.ShowEndTime}
-          //   onPress={() => {}}
-          // />
+          <EventCard
+            id={item._id}
+            item={item}
+            event_Name={item.eventName}
+            event_Cover_Image={
+              item.eventCoverImageUrl
+                ? {uri: item.eventCoverImageUrl}
+                : FALLBACK_EVENT_IMAGE
+            }
+            event_Date={formatDate(item.eventDateTime)}
+            event_Status={item.eventStatus ?? 'Ended'}
+            SoldticketsCount={item.eventLimitPerUser ?? 0}
+            showStartTime={formatTime(item.eventDateTime)}
+            ShowEndTime={formatTime(item.eventPublishOnDate)}
+            onPress={() => {
+              navigationRef.navigate('BookTIcket', {
+                data: item,
+                creatorId: item?.creatorId?._id,
+              });
+            }}
+          />
         )}
       />
     </View>

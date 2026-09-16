@@ -94,9 +94,13 @@ export const shortsApi = api.injectEndpoints({
       providesTags: ['LiveStream', 'Subscription', 'ContentUpload'],
     }),
     getSubscriptions: builder.query<any, any>({
-      query: () => ({
+      query: (params = {}) => ({
         url: ENDPOINTS.stream.subscriptionStreamList,
         method: 'GET',
+        params: {
+          page: params.page || 1,
+          limit: params.limit || 10,
+        },
       }),
       providesTags: ['Subscription', 'LiveStream', 'ContentUpload'],
     }),

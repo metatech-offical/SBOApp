@@ -9,13 +9,14 @@ import {
 } from 'react-native';
 import React from 'react';
 import {Colors} from '@constant/colors';
-import {fontSize, hp, wp} from '@constant/fontSize';
+import {fontSize} from '@constant/fontSize';
 import {fonts} from '@constant/fontfamily';
-import {HeartIcon, WishListIcon} from '@assets/svg/HomeScreenIcon';
-import {BackArrow} from '@assets/svg/AuthFlowIcons';
+import {HeartIcon, HomeChevronIcon, WishListIcon} from '@assets/svg/HomeScreenIcon';
 import FastImage from 'react-native-fast-image';
 import {navigate} from '@navigation/utils';
 import {useGetWishlistQuery} from '@rtkServices/CreatorStoreService';
+import HomeEmptyRow from './HomeEmptyRow';
+import {DUMMY_WISHLIST_PRODUCTS} from '@utils/dummyHome';
 
 export const WishListCard = ({
   item,
@@ -40,61 +41,51 @@ export default function WishListSection() {
   const {data: wishlistData, isLoading} = useGetWishlistQuery(null, {
     skip: false,
   });
+  const apiProducts = wishlistData?.data?.products || [];
+  const products =
+    apiProducts.length > 0 ? apiProducts : DUMMY_WISHLIST_PRODUCTS;
 
-  const EmptyList = ({isLoading}: {isLoading: boolean}) => {
+  const EmptyList = ({loading}: {loading: boolean}) => {
+    if (loading) {
+      return (
+        <HomeEmptyRow
+          icon={<ActivityIndicator size="small" color={Colors.white} />}
+          text="Wishlist is loading..."
+        />
+      );
+    }
+
     return (
-      <View style={styles.emptyListContainer}>
-        <View style={styles.iconContainer}>
-          {isLoading ? (
-            <ActivityIndicator size="small" color={Colors.white} />
-          ) : (
-            <HeartIcon />
-          )}
-        </View>
-        <Text style={styles.emptyListText}>
-          {isLoading
-            ? 'Wishlist is loading...'
-            : 'You can add your favorite products here'}
-        </Text>
-
-        {/* <BackArrow
-          fill={Colors.white}
-          width={20}
-          height={20}
-          opacity={0.5}
-          style={{transform: [{rotate: '180deg'}]}}
-        /> */}
-      </View>
+      <HomeEmptyRow
+        icon={<HeartIcon width={18} height={18} />}
+        text="You can add your favorite products here"
+        onPress={() => navigate('WishlistScreen', {})}
+      />
     );
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.titleContainer}>
-        <View style={styles.favoriteIconContainer}>
-          <WishListIcon />
+        <View style={styles.titleRow}>
+          <WishListIcon width={18} height={18} />
           <Text style={styles.title}>My wishlist</Text>
         </View>
         <TouchableOpacity
           hitSlop={20}
           style={styles.viewAllContainer}
           onPress={() => navigate('WishlistScreen', {})}>
-          <BackArrow
-            fill={Colors.white}
-            width={20}
-            height={20}
-            opacity={0.5}
-            style={{transform: [{rotate: '180deg'}]}}
-          />
+          <Text style={styles.seeAll}>View All</Text>
+          <HomeChevronIcon />
         </TouchableOpacity>
       </View>
 
       {isLoading ? (
-        <EmptyList isLoading={true} />
-      ) : wishlistData && wishlistData?.data?.products?.length > 0 ? (
+        <EmptyList loading={true} />
+      ) : products.length > 0 ? (
         <View>
           <FlatList
-            data={wishlistData?.data?.products}
+            data={products}
             renderItem={({item}) => (
               <WishListCard
                 item={item}
@@ -108,7 +99,7 @@ export default function WishListSection() {
           />
         </View>
       ) : (
-        <EmptyList isLoading={false} />
+        <EmptyList loading={false} />
       )}
     </View>
   );
@@ -116,90 +107,51 @@ export default function WishListSection() {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 10,
-    marginTop: 20,
+    marginTop: 24,
   },
   titleContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 15,
-    marginBottom: 20,
+    paddingHorizontal: 16,
   },
-  title: {
-    fontSize: fontSize.f14,
-    fontFamily: fonts['Poppins-SemiBold'],
-    color: Colors.white,
-  },
-  favoriteIconContainer: {
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
+    flex: 1,
+    paddingRight: 12,
+  },
+  title: {
+    fontSize: fontSize.f16,
+    fontFamily: fonts['Poppins-SemiBold'],
+    color: Colors.white,
   },
   seeAll: {
     fontSize: fontSize.f12,
     fontFamily: fonts['Poppins-Regular'],
     color: Colors.white,
-    opacity: 0.5,
+    opacity: 0.45,
   },
   viewAllContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 6,
   },
   creatorListContainer: {
-    gap: 5,
-    paddingHorizontal: 20,
+    gap: 16,
+    paddingHorizontal: 8,
+    marginTop: 12,
   },
   creatorCard: {
-    width: wp('25'),
-    height: wp('20'),
-    borderRadius: 10,
-    marginRight: 10,
-    alignItems: 'center',
+    width: 79,
+    height: 68,
+    borderRadius: 8,
+    overflow: 'hidden',
   },
   creatorImage: {
-    width: wp('25'),
-    height: wp('20'),
-    borderRadius: 10,
-    marginRight: 10,
-    alignItems: 'center',
-  },
-  creatorName: {
-    fontSize: fontSize.f12,
-    fontFamily: fonts['Poppins-Regular'],
-    color: Colors.white,
-    marginTop: 5,
-    // opacity: 0.5,
-    textAlign: 'center',
-  },
-
-  emptyListContainer: {
-    height: hp('10'),
-    width: wp('95'),
-    backgroundColor: '#FFFFFF0F',
-    borderRadius: 10,
-    alignItems: 'center',
-    flexDirection: 'row',
-    alignSelf: 'center',
-    marginTop: 10,
-    paddingHorizontal: 20,
-    gap: 10,
-    // justifyContent: "center",
-  },
-  iconContainer: {
-    width: hp('6'),
-    height: hp('6'),
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF0F',
-    borderRadius: 10,
-    // borderRadius: hp("5"),
-  },
-  emptyListText: {
-    fontSize: fontSize.f14,
-    fontFamily: fonts['Poppins-Regular'],
-    color: Colors.white,
-    width: wp('65'),
+    width: 79,
+    height: 68,
+    borderRadius: 8,
   },
 });

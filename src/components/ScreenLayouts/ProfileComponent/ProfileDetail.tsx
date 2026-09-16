@@ -13,6 +13,7 @@ import {fonts} from '@constant/fontfamily';
 import {BasketIcon, EditProfileIcon} from '@assets/svg/ProfileScreenIcon';
 import {TicketIcon} from '@assets/svg/HomeScreenIcon';
 import {ShareIcon} from '@assets/svg/CommonIcons';
+import {VerifiedIcon} from '@assets/svg/AuthFlowIcons';
 import {useFollowUnfollowUserMutation} from '@rtkServices/ContentActionService';
 import {useGetUserContentByIdQuery} from '@rtkServices/ProfileService';
 import {navigate} from '@navigation/utils';
@@ -20,6 +21,9 @@ import {useUnsubscribeFromCreatorMutation} from '@rtkServices/SubcriptionService
 import {Stream} from '@rtkServices/LiveStreamServices/LiveServices';
 import {useToastMessage} from '@hooks/useToastMessage';
 import {formatCount, shareProfile} from '@utils/helper';
+import GlowActionButton from '@components/CustomButtons/GlowActionButton';
+
+const USER_AVATAR_SIZE = 176;
 
 const ProfileIconButton = ({
   label,
@@ -50,11 +54,13 @@ const ProfileDetail = React.memo(
     profileData,
     isBlocked,
     liveData,
+    isOwnProfile,
   }: {
     profileType: 'user' | 'creator' | 'other';
     profileData: UserProfile;
     isBlocked?: boolean;
     liveData?: Stream[];
+    isOwnProfile?: boolean;
   }) => {
     const {showError, showSuccess} = useToastMessage();
     const [followAndUnfollow] = useFollowUnfollowUserMutation();
@@ -148,6 +154,115 @@ const ProfileDetail = React.memo(
       });
     };
 
+    const isUserLayout = profileType === 'user';
+    const displayName =
+      profileData?.displayName || profileData?.username || 'No Name';
+    const subtitle = profileData?.bio
+      ? profileData.bio
+      : profileData?.username
+        ? `@${profileData.username}`
+        : '';
+
+    if (isUserLayout) {
+      return (
+        <View style={styles.userContainer}>
+          <View style={styles.userHeroBlock}>
+            <Pressable
+              onPress={() => handleClickLive()}
+              style={styles.userAvatarWrap}>
+              <View style={styles.userAvatarRing}>
+                <FastImage
+                  source={
+                    profileData?.profilePicture
+                      ? {uri: profileData?.profilePicture}
+                      : require('@assets/images/DummyUserImage.png')
+                  }
+                  style={styles.userAvatar}
+                  resizeMode={FastImage.resizeMode.cover}
+                />
+              </View>
+              {profileData?.isLive && (
+                <View style={styles.liveIconContainer}>
+                  <Text style={styles.liveIconText}>Live</Text>
+                </View>
+              )}
+            </Pressable>
+
+            <View style={styles.userIdentity}>
+              <View style={styles.userNameRow}>
+                <Text numberOfLines={1} style={styles.userDisplayName}>
+                  {displayName}
+                </Text>
+                {profileData?.verified ? (
+                  <VerifiedIcon width={20} height={20} />
+                ) : null}
+              </View>
+              {!!subtitle && (
+                <Text numberOfLines={2} style={styles.userSubtitle}>
+                  {subtitle}
+                </Text>
+              )}
+            </View>
+          </View>
+
+          <View style={styles.userStatsRow}>
+            <View style={styles.userStatItem}>
+              <Text style={styles.userStatValue}>{formatCount(postsCount)}</Text>
+              <Text style={styles.userStatLabel}>Posts</Text>
+            </View>
+            <Pressable
+              onPress={() => openFollowList('followers')}
+              style={styles.userStatItem}>
+              <Text style={styles.userStatValue}>
+                {formatCount(profileData?.followersCount)}
+              </Text>
+              <Text style={styles.userStatLabel}>Followers</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => openFollowList('following')}
+              style={styles.userStatItem}>
+              <Text style={styles.userStatValue}>
+                {formatCount(profileData?.followingCount)}
+              </Text>
+              <Text style={styles.userStatLabel}>Following</Text>
+            </Pressable>
+          </View>
+
+          {isOwnProfile && !isBlocked ? (
+            <View style={styles.userPillsRow}>
+              <GlowActionButton
+                variant="follow"
+                title="Edit"
+                onPress={() => navigate('EditProfileScreen', {})}
+              />
+              <GlowActionButton
+                variant="subscribe"
+                title="Share"
+                onPress={() => shareProfile(profileData)}
+              />
+            </View>
+          ) : null}
+
+          {!isOwnProfile && !isBlocked ? (
+            <View style={styles.userPillsRow}>
+              <GlowActionButton
+                variant="follow"
+                title={following ? 'Following' : 'Follow'}
+                width={following ? 126 : 100}
+                onPress={handleFollowToggle}
+              />
+              <GlowActionButton
+                variant="subscribe"
+                title={profileData?.isSubscribed ? 'Unsubscribe' : 'Subscribe'}
+                width={profileData?.isSubscribed ? 140 : 126}
+                onPress={handleSubmit}
+              />
+            </View>
+          ) : null}
+        </View>
+      );
+    }
+
     return (
       <View style={styles.container}>
         <Pressable
@@ -173,7 +288,7 @@ const ProfileDetail = React.memo(
 
         <View style={styles.userNameRow}>
           <Text numberOfLines={1} style={styles.userNameStyle}>
-            {profileData?.displayName || profileData?.username || 'No Name'}
+            {displayName}
           </Text>
         </View>
         {!!profileData?.username && (
@@ -209,30 +324,18 @@ const ProfileDetail = React.memo(
 
         {profileType === 'other' && !isBlocked && (
           <View style={styles.followButtonContainer}>
-            <TouchableOpacity onPress={handleFollowToggle}>
-              <FastImage
-                source={require('@assets/images/Button.png')}
-                style={[
-                  styles.followButtonImage,
-                  {width: following ? 130 : 100},
-                ]}
-                resizeMode={FastImage.resizeMode.stretch}>
-                <Text style={styles.followButtonText}>
-                  {following ? 'Following' : 'Follow'}
-                </Text>
-              </FastImage>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={handleSubmit}>
-              <FastImage
-                source={require('@assets/images/Button2.png')}
-                style={styles.subscribedButtonImage}
-                resizeMode={FastImage.resizeMode.stretch}>
-                <Text style={styles.followButtonText}>
-                  {profileData?.isSubscribed ? 'Unsubscribe' : 'Subscribe'}
-                </Text>
-              </FastImage>
-            </TouchableOpacity>
+            <GlowActionButton
+              variant="follow"
+              title={following ? 'Following' : 'Follow'}
+              width={following ? 126 : 100}
+              onPress={handleFollowToggle}
+            />
+            <GlowActionButton
+              variant="subscribe"
+              title={profileData?.isSubscribed ? 'Unsubscribe' : 'Subscribe'}
+              width={profileData?.isSubscribed ? 140 : 126}
+              onPress={handleSubmit}
+            />
           </View>
         )}
 
@@ -240,10 +343,12 @@ const ProfileDetail = React.memo(
           !isBlocked && (
             <View style={styles.actionButtonsContainer}>
               <ProfileIconButton
-                label="Store"
+                label="Merchandise"
                 disabled={!profileData?.storeId && profileType === 'other'}
                 onPress={openStore}
-                icon={<BasketIcon width={20} height={20} stroke={Colors.white} />}
+                icon={
+                  <BasketIcon width={20} height={20} stroke={Colors.white} />
+                }
               />
               <ProfileIconButton
                 label="Tickets"
@@ -275,6 +380,87 @@ export default ProfileDetail;
 const styles = StyleSheet.create({
   container: {
     marginTop: 4,
+  },
+  userContainer: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    gap: 24,
+    marginTop: 4,
+  },
+  userHeroBlock: {
+    alignItems: 'center',
+    gap: 36,
+    width: '100%',
+  },
+  userAvatarWrap: {
+    width: USER_AVATAR_SIZE,
+    height: USER_AVATAR_SIZE,
+    alignSelf: 'center',
+  },
+  userAvatarRing: {
+    width: USER_AVATAR_SIZE,
+    height: USER_AVATAR_SIZE,
+    borderRadius: USER_AVATAR_SIZE / 2,
+    overflow: 'hidden',
+    borderWidth: 4.4,
+    borderColor: '#1AD655',
+  },
+  userAvatar: {
+    width: '100%',
+    height: '100%',
+  },
+  userIdentity: {
+    alignItems: 'center',
+    gap: 8,
+    width: '100%',
+  },
+  userDisplayName: {
+    fontSize: 36,
+    lineHeight: 40,
+    color: Colors.white,
+    fontFamily: fonts['Poppins-SemiBold'],
+    textAlign: 'center',
+    maxWidth: wp('70%'),
+  },
+  userSubtitle: {
+    fontSize: fontSize.f14,
+    lineHeight: 20,
+    color: Colors.white,
+    opacity: 0.5,
+    fontFamily: fonts['Poppins-Regular'],
+    textAlign: 'center',
+    paddingHorizontal: wp('6%'),
+  },
+  userStatsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+    width: '100%',
+  },
+  userStatItem: {
+    alignItems: 'center',
+    minWidth: 52,
+  },
+  userStatValue: {
+    fontSize: 24,
+    lineHeight: 28,
+    color: Colors.white,
+    fontFamily: fonts['Poppins-SemiBold'],
+    textAlign: 'center',
+  },
+  userStatLabel: {
+    fontSize: fontSize.f12,
+    color: Colors.white,
+    opacity: 0.5,
+    fontFamily: fonts['Poppins-Medium'],
+    textAlign: 'center',
+  },
+  userPillsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
   },
   userImageStyle: {
     width: wp('22%'),
@@ -309,6 +495,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 5,
   },
   userNameStyle: {
     fontSize: fontSize.f20,
@@ -384,28 +571,10 @@ const styles = StyleSheet.create({
   },
   followButtonContainer: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
     paddingHorizontal: wp('4%'),
     marginTop: hp('2%'),
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  followButtonImage: {
-    width: 100,
-    height: 35,
-    alignSelf: 'center',
-    justifyContent: 'center',
-  },
-  subscribedButtonImage: {
-    width: 130,
-    height: 35,
-    alignSelf: 'center',
-    justifyContent: 'center',
-  },
-  followButtonText: {
-    fontSize: fontSize.f14,
-    color: Colors.white,
-    fontFamily: fonts['Poppins-Medium'],
-    alignSelf: 'center',
   },
 });

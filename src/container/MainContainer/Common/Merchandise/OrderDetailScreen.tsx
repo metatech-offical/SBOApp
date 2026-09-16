@@ -26,12 +26,18 @@ import AddressDetail from '@components/ScreenLayouts/UserMerchandise/AddressDeta
 import CustomButton from '@components/CustomButtons/CustomButton';
 import {getStatusInfo} from '@utils/general';
 import {useToastMessage} from '@hooks/useToastMessage';
+import {getDummyOrderById, isDummyHomeId} from '@utils/dummyHome';
 
 const OrderDetailScreen = ({navigation, route}: OrderDetailScreenProps) => {
   const {showError, showSuccess} = useToastMessage();
   const {orderId, screenType} = route.params || {};
-  const {data, isLoading} = useGetOrderDetailQuery({orderId});
-  const orderByIdData = data?.data?.order;
+  const isDummyOrder = isDummyHomeId(orderId);
+  const {data, isLoading} = useGetOrderDetailQuery(
+    {orderId},
+    {skip: isDummyOrder || !orderId},
+  );
+  const dummyOrder = isDummyOrder ? getDummyOrderById(orderId) : undefined;
+  const orderByIdData = dummyOrder || data?.data?.order;
   const [rejectOrder, {isLoading: isRejectLoading}] = useRejectOrderMutation();
   const [acceptOrder, {isLoading: isAcceptLoading}] = useAcceptOrderMutation();
 

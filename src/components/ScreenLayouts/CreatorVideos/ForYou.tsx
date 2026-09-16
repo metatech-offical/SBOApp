@@ -1,143 +1,66 @@
-import CustomCarosal from '@components/VideosComponent/CustomCarosal';
-import {fonts} from '@constant/fontfamily';
-import React from 'react';
-import {View, Text, StyleSheet, FlatList, ScrollView} from 'react-native';
-import SubscriptionCard from '@components/VideosComponent/SubscriptionCard';
+import React, {useEffect, useMemo, useState} from 'react';
+import ReelsFeed from '@components/VideosComponent/ReelsFeed';
 import {
   useGetAllStreamsQuery,
   useGetSubscriptionsQuery,
   useWhatsHotQuery,
 } from '@rtkServices/ShortsService';
-import {useNavigation} from '@react-navigation/native';
-import {FireIcon} from '@assets/svg/HomeScreenIcon';
-import {fontSize} from '@constant/fontSize';
-import {Colors} from '@constant/colors';
+import {
+  DUMMY_FOR_YOU_REELS,
+  extractList,
+  mergeUniqueReels,
+} from '@utils/dummyVideos';
 
-const ForYou = () => {
-  const navigation = useNavigation();
-  const {data} = useGetSubscriptionsQuery({});
-
-  const {data: HotsData} = useWhatsHotQuery({
-    page: 1,
-    limit: 10,
-  });
-  const {data: CarouselData} = useGetAllStreamsQuery({
-    page: 1,
+const ForYou = ({isActive = true}: {isActive?: boolean}) => {
+  const [page, setPage] = useState(1);
+  const [items, setItems] = useState<any[]>([]);
+  const {data, isLoading, isFetching} = useGetAllStreamsQuery({
+    page,
     limit: 10,
     type: 'all',
   });
+  const {data: subscriptionsData} = useGetSubscriptionsQuery({
+    page: 1,
+    limit: 10,
+  });
+  const {data: hotsData} = useWhatsHotQuery({
+    page: 1,
+    limit: 10,
+  });
 
-  const SubscriptionData = data?.data?.data || [];
+  const pageStreamItems = useMemo(() => extractList(data), [data]);
 
-  const finalDataConcise = HotsData?.data?.filter(
-    item => item?.isLive || item?.videoUrl?.trim(),
-  );
+  useEffect(() => {
+    const nextItems = mergeUniqueReels([
+      page === 1 ? extractList(subscriptionsData) : [],
+      page === 1 ? extractList(hotsData) : [],
+      pageStreamItems,
+    ]);
+
+    setItems(prev => {
+      if (page === 1) {
+        return nextItems.length > 0 ? nextItems : DUMMY_FOR_YOU_REELS;
+      }
+      const existing = new Set(prev.map(item => item._id));
+      return [...prev, ...nextItems.filter(item => !existing.has(item._id))];
+    });
+  }, [page, pageStreamItems, subscriptionsData, hotsData]);
+
+  const isUsingDummy = items[0]?._id?.startsWith?.('dummy-');
 
   return (
-    <ScrollView
-      style={styles.container}
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{paddingBottom: 100}}>
-      {CarouselData?.data?.data && CarouselData?.data?.data?.length > 0 && (
-        <CustomCarosal CarouselData={CarouselData} />
-      )}
-      {SubscriptionData?.length > 0 || HotsData?.data?.length > 0 ? (
-        <>
-          {SubscriptionData?.length > 0 && (
-            <View style={styles.sbscriptionContainers}>
-              <View style={styles.forRow}>
-                <Text style={styles.heading}>Subscriptions</Text>
-                {/* <RightArrowIcon fill={'#ffffff'} height={20} width={20} /> */}
-              </View>
-              <View style={styles.mainContainer}>
-                <FlatList
-                  data={SubscriptionData}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  renderItem={({item}) => (
-                    <SubscriptionCard
-                      thumbnail={item?.thumbnailUrl || ''}
-                      userName={item?.username || ''}
-                      title={item?.title || ''}
-                      views={item?.viewsCount || 0}
-                      onPress={() => {
-                        navigation.navigate('NormalPlayer' as never, {
-                          streamId: item?._id,
-                        });
-                      }}
-                    />
-                  )}
-                  contentContainerStyle={{paddingLeft: 8, paddingRight: 8}}
-                />
-              </View>
-            </View>
-          )}
-          {HotsData?.data?.length > 0 && (
-            <View style={styles.sbscriptionContainers}>
-              <View style={styles.forRow2}>
-                <Text style={styles.heading}>What's Hot</Text>
-                <FireIcon fill={'#ffffff'} height={20} width={20} />
-              </View>
-              <View style={styles.mainContainer}>
-                <FlatList
-                  data={finalDataConcise}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  renderItem={({item}) => (
-                    <SubscriptionCard
-                      thumbnail={item?.thumbnailUrl || ''}
-                      userName={item.username || ''}
-                      title={item?.title || ''}
-                      views={item?.viewsCount || 0}
-                      onPress={() => {
-                        navigation.navigate('NormalPlayer' as never, {
-                          streamId: item?._id,
-                        });
-                      }}
-                    />
-                  )}
-                  contentContainerStyle={{paddingLeft: 8, paddingRight: 8}}
-                />
-              </View>
-            </View>
-          )}
-        </>
-      ) : (
-        <></>
-      )}
-    </ScrollView>
+    <ReelsFeed
+      items={items}
+      isActive={isActive}
+      isLoading={isLoading && items.length === 0}
+      contentType="streams"
+      onEndReached={() => {
+        if (!isUsingDummy && !isFetching && pageStreamItems.length >= 10) {
+          setPage(prev => prev + 1);
+        }
+      }}
+    />
   );
 };
 
 export default ForYou;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 10,
-  },
-  sbscriptionContainers: {
-    flex: 1,
-  },
-  forRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 26,
-    paddingBottom: 10,
-  },
-  forRow2: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    marginTop: 26,
-    paddingBottom: 10,
-    columnGap: 10,
-  },
-  heading: {
-    fontFamily: fonts['Poppins-SemiBold'],
-    fontSize: fontSize.f16,
-    color: Colors.white,
-  },
-  mainContainer: {},
-});

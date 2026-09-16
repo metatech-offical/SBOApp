@@ -17,6 +17,22 @@ export const homeApi = api.injectEndpoints({
         url: GET_FAVORITE_CREATORS(data.page, data.limit),
         method: 'GET',
       }),
+      providesTags: ['FavoriteCreators'],
+    }),
+    addFavoriteCreator: builder.mutation<any, {creatorId: string}>({
+      query: body => ({
+        url: ENDPOINTS.user.addFavoriteCreator,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['FavoriteCreators'],
+    }),
+    removeFavoriteCreator: builder.mutation<any, {creatorId: string}>({
+      query: ({creatorId}) => ({
+        url: ENDPOINTS.user.removeFavoriteCreator(creatorId),
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['FavoriteCreators'],
     }),
     getOrdersManagement: builder.query<
       OrderResponse,
@@ -115,6 +131,8 @@ export const homeApi = api.injectEndpoints({
 
 export const {
   useGetFavoriteCreatorsQuery,
+  useAddFavoriteCreatorMutation,
+  useRemoveFavoriteCreatorMutation,
   useGetOrdersManagementQuery,
   useGetOrderDetailQuery,
   useRejectOrderMutation,

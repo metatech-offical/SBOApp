@@ -27,7 +27,9 @@ const EventCard = (props: EventCardProps) => {
               {props?.showStartTime} - {props?.ShowEndTime}
             </Text>
           </View>
-          <Text style={styles.priceText}>{'$100 onwards'}</Text>
+          <Text style={styles.priceText}>
+            {`$${props?.item?.startingPrice ?? 100} onwards`}
+          </Text>
         </View>
         <View style={styles.datePortal}>
           <View style={styles.dateupperView}>

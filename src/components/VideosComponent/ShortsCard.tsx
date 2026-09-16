@@ -2,17 +2,9 @@ import {Colors} from '@constant/colors';
 import {fonts} from '@constant/fontfamily';
 import {fontSize} from '@constant/fontSize';
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Dimensions,
-} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import FastImage from 'react-native-fast-image';
-
-const {width} = Dimensions.get('window');
-const CARD_WIDTH = (width - 48) / 3; // 16px margin on both sides + 8px between cards
+import LinearGradient from 'react-native-linear-gradient';
 
 interface ShortsCardProps {
   thumbnail: string;
@@ -24,12 +16,11 @@ interface ShortsCardProps {
 }
 
 const ShortsCard: React.FC<ShortsCardProps> = React.memo(
-  ({thumbnail, title, userName, onPress, isLoading = false, item}) => {
+  ({thumbnail, title, onPress, isLoading = false, item}) => {
     if (isLoading) {
       return (
         <View style={[styles.cardContainer, styles.skeletonContainer]}>
           <View style={styles.skeletonThumbnail} />
-          <View style={{}} />
           <View style={styles.textContainer}>
             <View style={styles.skeletonTitle} />
             <View style={styles.skeletonTitle2} />
@@ -38,13 +29,11 @@ const ShortsCard: React.FC<ShortsCardProps> = React.memo(
       );
     }
 
-    // Check if content is subscribers only
     const isSubscribersOnly =
       item?.settings?.visibility === 'subscribers' && !item?.videoUrl;
 
     const handlePress = () => {
       if (isSubscribersOnly) {
-        // Don't navigate for subscribers only content
         return;
       }
       onPress();
@@ -64,30 +53,37 @@ const ShortsCard: React.FC<ShortsCardProps> = React.memo(
           ]}
           resizeMode={FastImage.resizeMode.cover}
         />
+        <LinearGradient
+          colors={['transparent', '#1A1A1A']}
+          locations={[0.62, 1]}
+          style={styles.gradient}
+        />
+        {!!title && (
+          <View style={styles.textContainer}>
+            <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
+              {title}
+            </Text>
+          </View>
+        )}
         {isSubscribersOnly && (
           <View style={styles.subscribersOverlay}>
             <Text style={styles.subscribersText}>Subscribers only</Text>
           </View>
         )}
-        {/* <View style={styles.textContainer}>
-          <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
-            {title}
-          </Text>
-        </View> */}
       </TouchableOpacity>
     );
   },
 );
 
 export default ShortsCard;
+
 const styles = StyleSheet.create({
   cardContainer: {
-    width: CARD_WIDTH,
-    height: 170,
-    borderRadius: 10,
+    width: '100%',
+    aspectRatio: 110 / 172,
+    borderRadius: 8,
     overflow: 'hidden',
     backgroundColor: '#333',
-    marginBottom: 5,
   },
   disabledCard: {
     opacity: 0.7,
@@ -97,18 +93,20 @@ const styles = StyleSheet.create({
   },
   thumbnail: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 10,
+    borderRadius: 8,
   },
   blurredThumbnail: {
     opacity: 0.5,
+  },
+  gradient: {
+    ...StyleSheet.absoluteFillObject,
   },
   skeletonThumbnail: {
     width: '100%',
     height: '100%',
     backgroundColor: 'rgba(128, 128, 128, 0.2)',
-    borderRadius: 10,
+    borderRadius: 8,
   },
-
   subscribersOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
@@ -118,14 +116,16 @@ const styles = StyleSheet.create({
   textContainer: {
     position: 'absolute',
     bottom: 0,
-    padding: 8,
+    paddingHorizontal: 8,
+    paddingBottom: 8,
+    paddingTop: 16,
     width: '100%',
-    // backgroundColor: 'rgba(0,0,0,0.4)',
   },
   title: {
     color: Colors.white,
-    fontSize: fontSize.f12,
+    fontSize: fontSize.f10,
     fontFamily: fonts['Poppins-Medium'],
+    lineHeight: 14,
   },
   subscribersText: {
     color: Colors.white,
@@ -137,16 +137,16 @@ const styles = StyleSheet.create({
     borderRadius: 15,
   },
   skeletonTitle: {
-    height: 12,
-    // backgroundColor: 'rgba(65, 44, 44, 0.4)',
+    height: 10,
     borderRadius: 4,
     marginBottom: 4,
     width: '80%',
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
   skeletonTitle2: {
-    height: 12,
-    // backgroundColor: 'rgba(128, 128, 128, 0.4)',
+    height: 10,
     borderRadius: 4,
     width: '60%',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
 });

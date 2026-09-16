@@ -272,6 +272,7 @@ interface HomeStatistics {
   totalWatchedVideos: number;
   tickets: number;
   totalOrders: number;
+  totalEvents?: number;
 }
 
 interface SuggestedAccount {

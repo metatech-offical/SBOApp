@@ -53,7 +53,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
 
   return (
     <Pressable style={[styles.container, containerStyle]}>
-      <SearchIcon width={22} height={22} />
+      <SearchIcon width={22} height={22} stroke="white" />
       <TextInput
         style={[styles.input, inputStyle]}
         placeholder={placeholder}
